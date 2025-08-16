@@ -1,7 +1,6 @@
 import { z } from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   Form,
   FormControl,
@@ -11,63 +10,72 @@ import {
 } from "@workspace/ui/components/form";
 import { Button } from "@workspace/ui/components/button";
 import { Input } from "@workspace/ui/components/input";
+import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { useMutation } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
 import { Doc } from "@workspace/backend/_generated/dataModel";
+import { useAtomValue, useSetAtom } from "jotai";
+import { contactSessionIdAtomFamily, organizationIdAtom, screenAtom } from "../../atoms/widget-atoms";
 
 const formSchema = z.object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Invalid email address"),
-  });
-
-const organizationId = "123";
+  name: z.string().min(1, "Name is required"),
+  email: z.string().email("Invalid email address"),
+});
 
 export const WidgetAuthScreen = () => {
+  const setScreen = useSetAtom(screenAtom);
 
-    const form = useForm<z.infer<typeof formSchema>>({
+  const organizationId = useAtomValue(organizationIdAtom);
+  const setContactSessionId = useSetAtom(
+    contactSessionIdAtomFamily(organizationId || "")
+  );
+
+  const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-        defaultValues: {
-            name: "",
-            email: "",
-        },
+    defaultValues: {
+      name: "",
+      email: "",
+    },
+  });
+
+  const createContactSession = useMutation(api.public.contactSessions.create);
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    if (!organizationId) {
+      return;
+    }
+
+    const metadata: Doc<"contactSessions">["metadata"] = {
+      userAgent: navigator.userAgent,
+      language: navigator.language,
+      languages: navigator.languages?.join(","),
+      platform: navigator.platform,
+      vendor: navigator.vendor,
+      screenResolution: `${screen.width}x${screen.height}`,
+      viewportSize: `${window.innerWidth}x${window.innerHeight}`,
+      timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      timezoneOffset: new Date().getTimezoneOffset(),
+      cookieEnabled: navigator.cookieEnabled,
+      referrer: document.referrer || "direct",
+      currentUrl: window.location.href,
+    };
+
+    const contactSessionId = await createContactSession({
+      ...values,
+      organizationId,
+      metadata,
     });
 
-    const createContactSession = useMutation(api.public.contactSessions.create);
-
-    const onSubmit = async (values: z.infer<typeof formSchema>) => {
-       if (!organizationId) {
-        return;
-       }
-
-       const metadata: Doc<"contactSessions">["metadata"] = {
-        userAgent: navigator.userAgent,
-        language: navigator.language,
-        languages: navigator.languages?.join(","),
-        platform: navigator.platform,
-        vendor: navigator.vendor,
-        screenResolution: `${screen.width}x${screen.height}`,
-        viewportSize: `${window.innerWidth}x${window.innerHeight}`,
-        timezone: Intl.DateTimeFormat().resolvedOptions().timeZone,
-        timezoneOffset: new Date().getTimezoneOffset(),
-        cookieEnabled: navigator.cookieEnabled,
-        referrer: document.referrer || "direct",
-        currentUrl: window.location.href,
-      }
-      const contactSessionId = await createContactSession({
-        ...values,
-        organizationId,
-        metadata,
-      });
-
-      console.log(contactSessionId);
-    }
+    setContactSessionId(contactSessionId);
+    setScreen("selection");
+  };
 
   return (
     <>
       <WidgetHeader>
         <div className="flex flex-col justify-between gap-y-2 px-2 py-6 font-semibold">
           <p className="text-3xl">
-            Hello 👋
+            Hi there! 👋
           </p>
           <p className="text-lg">
             Let&apos;s get you started
