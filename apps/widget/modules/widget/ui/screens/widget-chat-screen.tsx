@@ -8,9 +8,9 @@ import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { Button } from "@workspace/ui/components/button";
 import { useAtomValue, useSetAtom } from "jotai";
 import { ArrowLeftIcon, MenuIcon } from "lucide-react";
-// import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
-// import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
-// import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
+import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
+import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
+import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
 import { contactSessionIdAtomFamily, conversationIdAtom, organizationIdAtom, screenAtom } from "../../atoms/widget-atoms";
 import { useAction, useQuery } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
@@ -77,11 +77,11 @@ export const WidgetChatScreen = () => {
     { initialNumItems: 10 },
   );
 
-  // const { topElementRef, handleLoadMore, canLoadMore, isLoadingMore } = useInfiniteScroll({
-  //   status: messages.status,
-  //   loadMore: messages.loadMore,
-  //   loadSize: 10,
-  // });
+  const { topElementRef, handleLoadMore, canLoadMore, isLoadingMore } = useInfiniteScroll({
+    status: messages.status,
+    loadMore: messages.loadMore,
+    loadSize: 10,
+  });
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -127,6 +127,12 @@ export const WidgetChatScreen = () => {
       </WidgetHeader>
       <AIConversation>
         <AIConversationContent>
+          <InfiniteScrollTrigger
+            canLoadMore={canLoadMore}
+            isLoadingMore={isLoadingMore}
+            onLoadMore={handleLoadMore}
+            ref={topElementRef}
+          />
           {toUIMessages(messages.results ?? [])?.map((message) => {
             return (
               <AIMessage
@@ -136,13 +142,19 @@ export const WidgetChatScreen = () => {
                 <AIMessageContent>
                   <AIResponse>{message.content}</AIResponse>
                 </AIMessageContent>
-                {/* TODO: add avatar component */}
+                {message.role === "assistant" && (
+                  <DicebearAvatar
+                    imageUrl="/logo.svg"
+                    seed="assistant"
+                    size={32}
+                  />
+                )}
               </AIMessage>
             )
           })}
         </AIConversationContent>
       </AIConversation>
-      {/* TODO: add suggestions */}
+      {/* TODO: Add suggestions */}
       <Form {...form}>
           <AIInput
             className="rounded-none border-x-0 border-b-0"
