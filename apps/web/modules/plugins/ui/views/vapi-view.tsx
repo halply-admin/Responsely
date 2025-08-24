@@ -120,7 +120,7 @@ const VapiPluginForm = ({
                     <Input
                       {...field}
                       placeholder="Your public API key"
-                      type="text"
+                      type="password"
                     />
                   </FormControl>
                   <FormMessage />
@@ -137,7 +137,7 @@ const VapiPluginForm = ({
                     <Input
                       {...field}
                       placeholder="Your private API key"
-                      type="text"
+                      type="password"
                     />
                   </FormControl>
                   <FormMessage />
