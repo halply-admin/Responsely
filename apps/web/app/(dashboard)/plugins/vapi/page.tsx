@@ -1,5 +1,7 @@
-const Page = () => {
-    return ( <p>Vapi Plugin</p>)
-}
+import { VapiView } from "@/modules/plugins/ui/views/vapi-view";
 
-export default Page;    
+const Page = () => {
+  return <VapiView />
+}
+ 
+export default Page;
