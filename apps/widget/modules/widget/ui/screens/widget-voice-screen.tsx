@@ -1,5 +1,5 @@
 import { useSetAtom } from "jotai"
-import { ArrowLeftIcon, Mic, MicIcon, MicOffIcon  } from "lucide-react"
+import { ArrowLeftIcon, Mic, MicIcon, MicOffIcon } from "lucide-react"
 import { screenAtom } from "../../atoms/widget-atoms"
 import { useVapi } from "../../hooks/use-vapi"
 import { WidgetHeader } from "../components/widget-header"
@@ -23,19 +23,19 @@ export const WidgetVoiceScreen = () => {
     <>
       <WidgetHeader>
         <div className="flex items-center gap-x-2">
-            <Button
-              variant="transparent"
-              size="icon"
-              onClick={() => setScreen("selection")}
-            >
-              <ArrowLeftIcon />
-            </Button>
-            <p>Voice Chat</p>
-          </div>
+          <Button
+            variant="transparent"
+            size="icon"
+            onClick={() => setScreen("selection")}
+          >
+            <ArrowLeftIcon />
+          </Button>
+          <p>Voice Chat</p>
+        </div>
       </WidgetHeader>
 
       {transcript.length > 0 ? (
-        <AIConversation className="h-full flex-1">
+        <AIConversation className="h-full">
           <AIConversationContent>
             {transcript.map((message, index) => (
               <AIMessage
@@ -50,7 +50,7 @@ export const WidgetVoiceScreen = () => {
           </AIConversationContent>
           <AIConversationScrollButton />
         </AIConversation>
-      ): (
+      ) : (
         <div className="flex flex-1 h-full flex-col items-center justify-center gap-y-4">
           <div className="flex items-center justify-center rounded-full border bg-white p-3">
             <MicIcon className="size-6 text-muted-foreground" />
@@ -58,43 +58,43 @@ export const WidgetVoiceScreen = () => {
           <p className="text-muted-foreground">Transcript will appear here</p>
         </div>
       )}
+      
       <div className="border-t bg-background p-4">
         <div className="flex flex-col items-center gap-y-4">
           {isConnected && (
-          <div className="flex items-center gap-x-2">
-            <div className={cn("size-4 rounded-full", isSpeaking ? "animate-pulse bg-red-500" : "bg-green-500" )} 
-            />
+            <div className="flex items-center gap-x-2">
+              <div className={cn("size-4 rounded-full", isSpeaking ? "animate-pulse bg-red-500" : "bg-green-500")} />
               <span className="text-muted-foreground text-sm">
                 {isSpeaking ? "Assistant Speaking..." : "Listening..."}
               </span>
             </div>
+          )}
+          <div className="flex w-full justify-center">
+            {isConnected ? (
+              <Button
+                className="w-full"
+                disabled={isConnecting}
+                size="lg"
+                variant="destructive"
+                onClick={() => endCall()}
+              >
+                <MicOffIcon />
+                End Call
+              </Button>
+            ) : (
+              <Button
+                className="w-full"
+                disabled={isConnecting}
+                size="lg"
+                onClick={() => startCall()}
+              >
+                <MicIcon />
+                Start Call
+              </Button>
             )}
-            <div className="flex w-full justify-center">
-              {isConnected ? (
-                <Button
-                  className="w-full"
-                  disabled={isConnecting}
-                  size="lg"
-                  variant="destructive"
-                  onClick={() => endCall()}
-                >
-                  <MicOffIcon />
-                  End Call
-                </Button>
-              ) : (
-                <Button
-                  className="w-full"
-                  disabled={isConnecting}
-                  size="lg"
-                  onClick={() => startCall()}
-                >
-                  <MicIcon />
-                  Start Call
-                </Button>
-              )}
-            </div>
           </div>
         </div>
+      </div>
     </>
   )
 }
