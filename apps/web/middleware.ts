@@ -1,3 +1,4 @@
+// middleware.ts
 import { clerkMiddleware, createRouteMatcher } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server';
 
@@ -17,6 +18,11 @@ const isOrgFreeRoute = createRouteMatcher([
 export default clerkMiddleware(async (auth, req) => {
   const { userId, orgId } = await auth();
 
+  // If user is authenticated and tries to access landing, redirect to app
+  if (userId && (req.nextUrl.pathname === '/' || req.nextUrl.pathname === '/landing')) {
+    return NextResponse.redirect(new URL('/conversations', req.url));
+  }
+
   if (!isPublicRoute(req)) {
     await auth.protect();
   }
@@ -35,9 +41,7 @@ export default clerkMiddleware(async (auth, req) => {
 
 export const config = {
   matcher: [
-    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 }
