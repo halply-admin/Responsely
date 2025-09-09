@@ -36,6 +36,9 @@ import { useState } from "react";
 import { cn } from "@workspace/ui/lib/utils";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 import { toast } from "sonner";
+import { ArrowLeftIcon } from "lucide-react";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import Link from "next/link";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -46,6 +49,7 @@ export const ConversationIdView = ({
 }: {
   conversationId: Id<"conversations">,
 }) => {
+  const isMobile = useIsMobile();
   const conversation = useQuery(api.private.conversations.getOne, {
     conversationId,
   });
@@ -145,12 +149,21 @@ export const ConversationIdView = ({
   return (
     <div className="flex h-full flex-col bg-muted">
       <header className="flex items-center justify-between border-b bg-background p-2.5">
-        <Button
-          size="sm"
-          variant="ghost"
-        >
-          <MoreHorizontalIcon />
-        </Button>
+        <div className="flex items-center gap-2">
+          {isMobile && (
+            <Link href="/conversations">
+              <Button size="sm" variant="ghost">
+                <ArrowLeftIcon className="h-4 w-4" />
+              </Button>
+            </Link>
+          )}
+          {!isMobile && (
+            <Button size="sm" variant="ghost">
+              <MoreHorizontalIcon />
+            </Button>
+          )}
+        </div>
+
         {!!conversation && (
           <ConversationStatusButton
             onClick={handleToggleStatus}

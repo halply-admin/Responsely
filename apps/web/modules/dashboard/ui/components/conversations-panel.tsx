@@ -24,7 +24,11 @@ import { useAtomValue, useSetAtom } from "jotai/react";
 import { statusFilterAtom } from "../../atoms";
 import { Skeleton } from "@workspace/ui/components/skeleton";
 
-export const ConversationsPanel = () => {
+interface ConversationsPanelProps {
+  onConversationSelect?: () => void;
+}
+
+export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelProps = {}) => {
   const pathname = usePathname();
 
   const statusFilter = useAtomValue(statusFilterAtom);
@@ -38,9 +42,7 @@ export const ConversationsPanel = () => {
           ? undefined
           : statusFilter,
     },
-    {
-      initialNumItems: 10,
-    },
+    { initialNumItems: 10 }
   );
 
   const {
@@ -48,12 +50,12 @@ export const ConversationsPanel = () => {
     handleLoadMore,
     canLoadMore,
     isLoadingMore,
-    isLoadingFirstPage,
   } = useInfiniteScroll({
     status: conversations.status,
     loadMore: conversations.loadMore,
     loadSize: 10,
   });
+
 
   return (
     <div className="flex h-full w-full flex-col bg-background text-sidebar-foreground">
@@ -98,7 +100,7 @@ export const ConversationsPanel = () => {
           </SelectContent>
         </Select>
       </div>
-      {isLoadingFirstPage ? (
+      {conversations.status === "LoadingFirstPage" ? (
         <SkeletonConversations />
       ) : (
         <ScrollArea className="max-h-[calc(100vh-53px)]">
