@@ -18,11 +18,13 @@ import { cn } from "@workspace/ui/lib/utils";
 import { usePaginatedQuery } from "convex/react";
 import { ListIcon, ArrowRightIcon, ArrowUpIcon, CheckIcon, CornerUpLeftIcon } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { ConversationStatusIcon } from "@workspace/ui/components/conversation-status-icon";
 import { useAtomValue, useSetAtom } from "jotai/react";
 import { statusFilterAtom } from "../../atoms";
 import { Skeleton } from "@workspace/ui/components/skeleton";
+import { useSidebar } from "@workspace/ui/components/sidebar";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { usePathname } from "next/navigation";
 
 interface ConversationsPanelProps {
   onConversationSelect?: () => void;
@@ -30,6 +32,8 @@ interface ConversationsPanelProps {
 
 export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelProps = {}) => {
   const pathname = usePathname();
+  const { setOpenMobile } = useSidebar();
+  const isMobile = useIsMobile();
 
   const statusFilter = useAtomValue(statusFilterAtom);
   const setStatusFilter = useSetAtom(statusFilterAtom);
@@ -56,6 +60,13 @@ export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelP
     loadSize: 10,
   });
 
+  const handleConversationClick = () => {
+    // Close mobile sidebar when conversation is selected
+    if (isMobile) {
+      setOpenMobile(false);
+    }
+    onConversationSelect?.();
+  };
 
   return (
     <div className="flex h-full w-full flex-col bg-background text-sidebar-foreground">
@@ -117,19 +128,22 @@ export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelP
                 ? getCountryFlagUrl(country.code)
                 : undefined;
 
+              const isCurrentConversation = pathname === `/conversations/${conversation._id}`;
+
               return (
                 <Link
                   key={conversation._id}
                   className={cn(
-                    "relative flex cursor-pointer items-start gap-3 border-b p-4 py-5 text-sm leading-tight hover:bg-accent hover:text-accent-foreground",
-                    pathname === `/conversations/${conversation._id}` &&
+                    "relative flex cursor-pointer items-start gap-3 border-b p-4 py-5 text-sm leading-tight hover:bg-accent hover:text-accent-foreground transition-colors",
+                    isCurrentConversation &&
                       "bg-accent text-accent-foreground"
                   )}
                   href={`/conversations/${conversation._id}`}
+                  onClick={handleConversationClick}
                 >
                   <div className={cn(
                     "-translate-y-1/2 absolute top-1/2 left-0 h-[64%] w-1 rounded-r-full bg-neutral-300 opacity-0 transition-opacity",
-                    pathname === `/conversations/${conversation._id}` &&
+                    isCurrentConversation &&
                       "opacity-100"
                   )} />
 
@@ -139,15 +153,26 @@ export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelP
                     size={40}
                     className="shrink-0"
                   />
-                  <div className="flex-1">
+                  <div className="flex-1 min-w-0">
                     <div className="flex w-full items-center gap-2">
-                      <span className="truncate font-bold">
+                      <span className={cn(
+                        "truncate font-medium",
+                        isCurrentConversation ? "font-semibold" : "font-normal"
+                      )}>
                         {conversation.contactSession.name}
                       </span>
                       <span className="ml-auto shrink-0 text-muted-foreground text-xs">
-                        {formatDistanceToNow(conversation._creationTime)}
+                        {formatDistanceToNow(conversation._creationTime, { addSuffix: true })}
                       </span>
                     </div>
+                    
+                    {/* Contact email - show if available */}
+                    {conversation.contactSession.email && (
+                      <div className="text-xs text-muted-foreground truncate mt-0.5">
+                        {conversation.contactSession.email}
+                      </div>
+                    )}
+                    
                     <div className="mt-1 flex items-center justify-between gap-2">
                       <div className="flex w-0 grow items-center gap-1">
                         {isLastMessageFromOperator && (
@@ -155,11 +180,13 @@ export const ConversationsPanel = ({ onConversationSelect }: ConversationsPanelP
                         )}
                         <span
                           className={cn(
-                            "line-clamp-1 text-muted-foreground text-xs",
-                            !isLastMessageFromOperator && "font-bold text-black"
+                            "line-clamp-1 text-xs",
+                            !isLastMessageFromOperator 
+                              ? "font-medium text-foreground" 
+                              : "text-muted-foreground"
                           )}
                         >
-                          {conversation.lastMessage?.text}
+                          {conversation.lastMessage?.text || "No messages yet"}
                         </span>
                       </div>
                       <ConversationStatusIcon status={conversation.status} />
@@ -196,6 +223,9 @@ export const SkeletonConversations = () => {
                 <div className="flex w-full items-center gap-2">
                   <Skeleton className="h-4 w-24" />
                   <Skeleton className="ml-auto h-3 w-12 shrink-0" />
+                </div>
+                <div className="mt-1">
+                  <Skeleton className="h-3 w-32" />
                 </div>
                 <div className="mt-2">
                   <Skeleton className="h-3 w-full" />

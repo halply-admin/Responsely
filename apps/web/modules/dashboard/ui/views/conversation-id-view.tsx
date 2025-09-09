@@ -39,6 +39,17 @@ import { toast } from "sonner";
 import { ArrowLeftIcon } from "lucide-react";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import Link from "next/link";
+import { UserIcon } from "lucide-react";
+import { useSidebar } from "@workspace/ui/components/sidebar";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@workspace/ui/components/sheet";
+import { ContactPanel } from "../components/contact-panel";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -50,6 +61,9 @@ export const ConversationIdView = ({
   conversationId: Id<"conversations">,
 }) => {
   const isMobile = useIsMobile();
+  const { toggleSidebar } = useSidebar();
+  const [contactSheetOpen, setContactSheetOpen] = useState(false);
+  
   const conversation = useQuery(api.private.conversations.getOne, {
     conversationId,
   });
@@ -86,7 +100,6 @@ export const ConversationIdView = ({
 
     try {
       const response = await enhanceResponse({ prompt: currentValue });
-
       form.setValue("message", response);
     } catch (error) {
       toast.error("Something went wrong");
@@ -148,30 +161,82 @@ export const ConversationIdView = ({
 
   return (
     <div className="flex h-full flex-col bg-muted">
-      <header className="flex items-center justify-between border-b bg-background p-2.5">
-        <div className="flex items-center gap-2">
-          {isMobile && (
-            <Link href="/conversations">
-              <Button size="sm" variant="ghost">
-                <ArrowLeftIcon className="h-4 w-4" />
-              </Button>
-            </Link>
-          )}
-          {!isMobile && (
+      {/* Mobile header with enhanced navigation and contact access */}
+      {isMobile && (
+        <header className="flex items-center gap-3 border-b bg-background px-4 py-2.5">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            onClick={toggleSidebar}
+            className="p-2 h-10 w-10"
+          >
+            <ArrowLeftIcon className="h-4 w-4" />
+          </Button>
+          
+          <div className="flex items-center gap-2 flex-1 min-w-0">
+            <DicebearAvatar 
+              seed={conversation.contactSessionId} 
+              className="h-8 w-8 shrink-0" 
+            />
+            <div className="min-w-0 flex-1">
+              <span className="font-medium truncate block">
+                {conversation.contactSession?.name || "Unknown Contact"}
+              </span>
+              {conversation.contactSession?.email && (
+                <span className="text-xs text-muted-foreground truncate block">
+                  {conversation.contactSession.email}
+                </span>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1">
+            {/* Contact Info Sheet for Mobile */}
+            <Sheet open={contactSheetOpen} onOpenChange={setContactSheetOpen}>
+              <SheetTrigger asChild>
+                <Button variant="ghost" size="sm" className="p-2 h-10 w-10">
+                  <UserIcon className="h-4 w-4" />
+                </Button>
+              </SheetTrigger>
+              <SheetContent side="right" className="w-80 p-0">
+                <SheetHeader className="sr-only">
+                  <SheetTitle>Contact Information</SheetTitle>
+                  <SheetDescription>
+                    View contact details and conversation information
+                  </SheetDescription>
+                </SheetHeader>
+                <ContactPanel />
+              </SheetContent>
+            </Sheet>
+
+            <ConversationStatusButton
+              onClick={handleToggleStatus}
+              status={conversation.status}
+              disabled={isUpdatingStatus}
+            />
+          </div>
+        </header>
+      )}
+
+      {/* Desktop header */}
+      {!isMobile && (
+        <header className="flex items-center justify-between border-b bg-background p-2.5">
+          <div className="flex items-center gap-2">
             <Button size="sm" variant="ghost">
               <MoreHorizontalIcon />
             </Button>
-          )}
-        </div>
+          </div>
 
-        {!!conversation && (
-          <ConversationStatusButton
-            onClick={handleToggleStatus}
-            status={conversation.status}
-            disabled={isUpdatingStatus}
-          />
-        )}
-      </header>
+          {!!conversation && (
+            <ConversationStatusButton
+              onClick={handleToggleStatus}
+              status={conversation.status}
+              disabled={isUpdatingStatus}
+            />
+          )}
+        </header>
+      )}
+
       <AIConversation className="max-h-[calc(100vh-180px)]">
         <AIConversationContent>
           <InfiniteScrollTrigger
@@ -266,13 +331,33 @@ export const ConversationIdView = ({
 };
 
 export const ConversationIdViewLoading = () => {
+  const isMobile = useIsMobile();
+  
   return (
     <div className="flex h-full flex-col bg-muted">
       <header className="flex items-center justify-between border-b bg-background p-2.5">
-        <Button disabled size="sm" variant="ghost">
-          <MoreHorizontalIcon />
-        </Button>
+        {isMobile ? (
+          <>
+            <Skeleton className="h-8 w-8" />
+            <div className="flex items-center gap-2 flex-1 mx-3">
+              <Skeleton className="h-8 w-8 rounded-full" />
+              <div className="flex-1 space-y-1">
+                <Skeleton className="h-4 w-32" />
+                <Skeleton className="h-3 w-48" />
+              </div>
+            </div>
+            <Skeleton className="h-8 w-20" />
+          </>
+        ) : (
+          <>
+            <Button disabled size="sm" variant="ghost">
+              <MoreHorizontalIcon />
+            </Button>
+            <Skeleton className="h-8 w-20" />
+          </>
+        )}
       </header>
+      
       <AIConversation className="max-h-[calc(100vh-180px)]">
         <AIConversationContent>
           {Array.from({ length: 8 }, (_, index) => {

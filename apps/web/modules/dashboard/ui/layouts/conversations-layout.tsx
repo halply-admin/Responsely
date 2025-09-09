@@ -25,35 +25,11 @@ export const ConversationsLayout = ({
   const [sheetOpen, setSheetOpen] = useState(false);
 
   if (isMobile) {
+    // On mobile, just show the chat content
+    // Conversations access is through the main sidebar
     return (
-      <div className="h-full flex flex-col">
-        {/* Mobile Header */}
-        <div className="h-14 border-b bg-background flex items-center px-4">
-          <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
-            <SheetTrigger asChild>
-              <Button variant="ghost" size="sm" className="mr-3">
-                <MenuIcon className="h-5 w-5" />
-                <span className="ml-2">Conversations</span>
-              </Button>
-            </SheetTrigger>
-            <SheetContent side="left" className="w-80 p-0">
-              {/* Add accessibility components */}
-              <SheetTitle className="sr-only">
-                Conversations List
-              </SheetTitle>
-              <SheetDescription className="sr-only">
-                Browse and select conversations to view messages
-              </SheetDescription>
-              
-              <ConversationsPanel onConversationSelect={() => setSheetOpen(false)} />
-            </SheetContent>
-          </Sheet>
-        </div>
-
-        {/* Mobile Content */}
-        <div className="flex-1">
-          {children}
-        </div>
+      <div className="flex h-full flex-col">
+        {children}
       </div>
     );
   }
