@@ -33,6 +33,8 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { toast } from "sonner";
 import { Button } from "@workspace/ui/components/button";
 import { VapiConnectedView } from "../components/vapi-connected-view";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { MobileAwareLayout } from "@/modules/dashboard/ui/layouts/mobile-aware-layout";
 
 const vapiFeatures: Feature[] = [
   {
@@ -156,7 +158,7 @@ const VapiPluginForm = ({
         </Form>
       </DialogContent>
     </Dialog>
-  )
+  );
 };
 
 const VapiPluginRemoveForm = ({
@@ -201,6 +203,7 @@ const VapiPluginRemoveForm = ({
 };
 
 export const VapiView = () => {
+  const isMobile = useIsMobile();
   const vapiPlugin = useQuery(api.private.plugins.getOne, { service: "vapi" });
 
   const [connectOpen, setConnectOpen] = useState(false);
@@ -214,15 +217,19 @@ export const VapiView = () => {
     }
   };
 
-  return (
+  const content = (
     <>
       <VapiPluginForm open={connectOpen} setOpen={setConnectOpen} />
       <VapiPluginRemoveForm open={removeOpen} setOpen={setRemoveOpen} />
-      <div className="flex min-h-screen flex-col bg-muted p-8">
+      <div className={`flex min-h-screen flex-col bg-muted ${isMobile ? 'p-4' : 'p-8'}`}>
         <div className="mx-auto w-full max-w-screen-md">
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-4xl">Vapi Plugin</h1>
-            <p className="text-muted-foreground">Connect Vapi to enable AI voice calls and phone support</p>
+            <h1 className={`${isMobile ? 'text-xl' : 'text-2xl md:text-4xl'}`}>
+              Vapi Plugin
+            </h1>
+            <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
+              Connect Vapi to enable AI voice calls and phone support
+            </p>
           </div>
 
           <div className="mt-8">
@@ -241,5 +248,11 @@ export const VapiView = () => {
         </div>
       </div>
     </>
+  );
+
+  return (
+    <MobileAwareLayout title="Voice Assistant">
+      {content}
+    </MobileAwareLayout>
   );
 };

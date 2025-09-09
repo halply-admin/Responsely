@@ -18,8 +18,11 @@ import {
 } from "@workspace/ui/components/dialog";
 import { useState } from "react";
 import { createScript } from "../../utils";
+import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
+import { MobileAwareLayout } from "@/modules/dashboard/ui/layouts/mobile-aware-layout";
 
 export const IntegrationsView = () => {
+  const isMobile = useIsMobile();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedSnippet, setSelectedSnippet] = useState("");
   const { organization } = useOrganization();
@@ -44,24 +47,26 @@ export const IntegrationsView = () => {
     }
   };
 
-  return (
+  const content = (
     <>
       <IntegrationsDialog
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         snippet={selectedSnippet}
       />
-      <div className="flex min-h-screen flex-col bg-muted p-8">
+      <div className={`flex min-h-screen flex-col bg-muted ${isMobile ? 'p-4' : 'p-8'}`}>
         <div className="mx-auto w-full max-w-screen-md">
           <div className="space-y-2">
-            <h1 className="text-2xl md:text-4xl">Setup & Integrations</h1>
-            <p className="text-muted-foreground">
+            <h1 className={`${isMobile ? 'text-xl' : 'text-2xl md:text-4xl'}`}>
+              Setup & Integrations
+            </h1>
+            <p className={`text-muted-foreground ${isMobile ? 'text-sm' : ''}`}>
               Choose the integration that&apos;s right for you
             </p>
           </div>
           <div className="mt-8 space-y-6">
-            <div className="flex items-center gap-4">
-              <Label className="w-34" htmlFor="organization-id">
+            <div className={`flex ${isMobile ? 'flex-col' : 'items-center'} gap-4`}>
+              <Label className={`${isMobile ? 'text-sm' : 'w-34'}`} htmlFor="organization-id">
                 Organization ID
               </Label>
               <Input 
@@ -69,12 +74,12 @@ export const IntegrationsView = () => {
                 id="organization-id"
                 readOnly
                 value={organization?.id ?? ""}
-                className="flex-1 bg-background font-mono text-sm"
+                className={`${isMobile ? 'w-full' : 'flex-1'} bg-background font-mono text-sm`}
               />
               <Button
                 className="gap-2"
                 onClick={handleCopy}
-                size="sm"
+                size={isMobile ? "sm" : "sm"}
               >
                 <CopyIcon className="size-4" />
                 Copy
@@ -85,26 +90,26 @@ export const IntegrationsView = () => {
           <Separator className="my-8" />
           <div className="space-y-6">
             <div className="space-y-1">
-              <Label className="text-lg">Integrations</Label>
-              <p className="text-muted-foreground text-sm">
+              <Label className={`${isMobile ? 'text-base' : 'text-lg'}`}>Integrations</Label>
+              <p className={`text-muted-foreground ${isMobile ? 'text-xs' : 'text-sm'}`}>
                 Add the following code to your website to enable the chatbox.
               </p>
             </div>
-            <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+            <div className={`grid gap-4 ${isMobile ? 'grid-cols-1 sm:grid-cols-2' : 'grid-cols-2 md:grid-cols-4'}`}>
               {INTEGRATIONS.map((integration) => (
                 <button
                   key={integration.id}
                   onClick={() => handleIntegrationClick(integration.id)}
                   type="button"
-                  className="flex items-center gap-4 rounded-lg border bg-background p-4 hover:bg-accent"
+                  className={`flex items-center gap-4 rounded-lg border bg-background ${isMobile ? 'p-3' : 'p-4'} hover:bg-accent`}
                 >
                   <Image
                     alt={integration.title}
-                    height={32}
+                    height={isMobile ? 24 : 32}
                     src={integration.icon}
-                    width={32}
+                    width={isMobile ? 24 : 32}
                   />
-                  <p>{integration.title}</p>
+                  <p className={isMobile ? 'text-sm' : ''}>{integration.title}</p>
                 </button>
               ))}
             </div>
@@ -112,6 +117,12 @@ export const IntegrationsView = () => {
         </div>
       </div>
     </>
+  );
+
+  return (
+    <MobileAwareLayout title="Integrations">
+      {content}
+    </MobileAwareLayout>
   );
 };
 
