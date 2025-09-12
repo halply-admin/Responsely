@@ -6,6 +6,7 @@ import { chatBubbleIcon, closeIcon } from './icons';
   let container: HTMLDivElement | null = null;
   let button: HTMLButtonElement | null = null;
   let isOpen = false;
+  let primaryColor = '#3b82f6'; // Default fallback color
   
   // Get configuration from script tag
   let organizationId: string | null = null;
@@ -34,6 +35,29 @@ import { chatBubbleIcon, closeIcon } from './icons';
     console.error('Responsely Widget: data-organization-id attribute is required');
     return;
   }
+
+  // Generate darker shade for shadows
+  function generateShadowColor(hex: string, opacity: number = 0.35): string {
+    // Remove the hash if present
+    hex = hex.replace('#', '');
+    
+    // Parse the hex color
+    const num = parseInt(hex, 16);
+    const r = (num >> 16) & 255;
+    const g = (num >> 8) & 255;
+    const b = num & 255;
+    
+    return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+  }
+
+  // Update button styling with new color
+  function updateButtonColor(color: string) {
+    if (button) {
+      primaryColor = color;
+      button.style.background = primaryColor;
+      button.style.boxShadow = `0 4px 24px ${generateShadowColor(primaryColor)}`;
+    }
+  }
   
   function init() {
     if (document.readyState === 'loading') {
@@ -44,10 +68,12 @@ import { chatBubbleIcon, closeIcon } from './icons';
   }
   
   function render() {
-    // Create floating action button
+    // Create floating action button with default color
     button = document.createElement('button');
     button.id = 'echo-widget-button';
     button.innerHTML = chatBubbleIcon;
+    
+    // Apply default styles (will be updated when widget loads)
     button.style.cssText = `
       position: fixed;
       ${position === 'bottom-right' ? 'right: 20px;' : 'left: 20px;'}
@@ -55,7 +81,7 @@ import { chatBubbleIcon, closeIcon } from './icons';
       width: 60px;
       height: 60px;
       border-radius: 50%;
-      background: #3b82f6;
+      background: ${primaryColor};
       color: white;
       border: none;
       cursor: pointer;
@@ -63,7 +89,7 @@ import { chatBubbleIcon, closeIcon } from './icons';
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 24px rgba(59, 130, 246, 0.35);
+      box-shadow: 0 4px 24px ${generateShadowColor(primaryColor)};
       transition: all 0.2s ease;
     `;
     
@@ -136,6 +162,12 @@ import { chatBubbleIcon, closeIcon } from './icons';
           container.style.height = `${payload.height}px`;
         }
         break;
+      case 'updatePrimaryColor':
+        // Widget sends its primary color to update the button
+        if (payload.primaryColor) {
+          updateButtonColor(payload.primaryColor);
+        }
+        break;
     }
   }
   
@@ -174,7 +206,7 @@ import { chatBubbleIcon, closeIcon } from './icons';
       }, 300);
       // Change button icon back to chat
       button.innerHTML = chatBubbleIcon;
-      button.style.background = '#3b82f6';
+      button.style.background = primaryColor; // Use current primary color
     }
   }
   
@@ -204,6 +236,9 @@ import { chatBubbleIcon, closeIcon } from './icons';
     if (newConfig.position) {
       position = newConfig.position;
     }
+    
+    // Reset primary color to default
+    primaryColor = '#3b82f6';
     
     // Reinitialize
     init();
