@@ -53,23 +53,28 @@ export const WidgetChatScreen = () => {
     contactSessionIdAtomFamily(organizationId || "")
   );
 
+  // Get the primary color from widget settings
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
+
   const onBack = () => {
     setConversationId(null);
     setScreen("selection");
   };
 
   const suggestions = useMemo(() => {
-    if (!widgetSettings) {
+    if (!widgetSettings?.defaultSuggestions) {
       return [];
     }
 
-    // Transform object into array
-    return Object.keys(widgetSettings.defaultSuggestions).map((key) =>{
-      return widgetSettings.defaultSuggestions[
-        key as keyof typeof widgetSettings.defaultSuggestions
-      ];
-    });
-  }, [widgetSettings]);
+    // Transform object into array, filtering out undefined and empty values
+    return Object.keys(widgetSettings?.defaultSuggestions ?? {})
+      .map((key) => {
+        return widgetSettings?.defaultSuggestions?.[
+          key as keyof typeof widgetSettings.defaultSuggestions
+        ];
+      })
+      .filter((suggestion): suggestion is string => Boolean(suggestion && suggestion.trim()));
+  }, [widgetSettings?.defaultSuggestions]);
 
   const conversation = useQuery(
     api.public.conversations.getOne,
@@ -158,11 +163,18 @@ export const WidgetChatScreen = () => {
                   <AIResponse>{message.content}</AIResponse>
                 </AIMessageContent>
                 {message.role === "assistant" && (
-                  <DicebearAvatar
-                    imageUrl="/logo.svg"
-                    seed="assistant"
-                    size={32}
-                  />
+                  <div 
+                    className="flex h-8 w-8 items-center justify-center rounded-full border"
+                    style={{
+                      backgroundColor: primaryColor,
+                    }}
+                  >
+                    <DicebearAvatar
+                      imageUrl="/logo.svg"
+                      seed="assistant"
+                      size={32}
+                    />
+                  </div>
                 )}
               </AIMessage>
             )
@@ -172,20 +184,22 @@ export const WidgetChatScreen = () => {
       {toUIMessages(messages.results ?? [])?.length === 1 && (
       <AISuggestions className="flex w-full flex-col items-end p-2">
         {suggestions.map((suggestion) => {
-          if(!suggestion) {
-            return null;
-           }
-
            return (
-            <AISuggestion key={suggestion} onClick={() =>{
-              form.setValue("message", suggestion, {
-                shouldValidate: true,
-                shouldDirty: true,
-                shouldTouch: true,
-              });
-              form.handleSubmit(onSubmit)();
-            }} suggestion={suggestion} 
-            
+            <AISuggestion 
+              key={suggestion} 
+              onClick={() =>{
+                form.setValue("message", suggestion, {
+                  shouldValidate: true,
+                  shouldDirty: true,
+                  shouldTouch: true,
+                });
+                form.handleSubmit(onSubmit)();
+              }} 
+              suggestion={suggestion}
+              style={{
+                borderColor: primaryColor,
+                color: primaryColor,
+              }}
             />
           );
           })}
@@ -225,6 +239,10 @@ export const WidgetChatScreen = () => {
                 disabled={conversation?.status === "resolved" || !form.formState.isValid}
                 status="ready"
                 type="submit"
+                style={{
+                  backgroundColor: primaryColor,
+                  borderColor: primaryColor,
+                }}
               />
             </AIInputToolbar>
           </AIInput>

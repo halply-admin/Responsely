@@ -152,6 +152,18 @@ export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string
     setScreen(hasValidSession ? "selection" : "auth");
   }, [step, contactSessionId, sessionValid, setScreen]);
 
+  useEffect(() => {
+    if (widgetSettings?.appearance?.primaryColor) {
+      // Send the primary color to the parent window (embed script)
+      window.parent.postMessage({
+        type: 'updatePrimaryColor',
+        payload: {
+          primaryColor: widgetSettings.appearance.primaryColor
+        }
+      }, '*');
+    }
+  }, [widgetSettings?.appearance?.primaryColor]);
+
   return (
     <>
       <WidgetHeader>

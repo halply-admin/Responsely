@@ -22,6 +22,9 @@ export const WidgetSelectionScreen = () => {
     contactSessionIdAtomFamily(organizationId || "")
   );
 
+  // Get the primary color from widget settings
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
+
   const createConversation = useMutation(api.public.conversations.create);
   const [isPending, setIsPending] = useState(false);
 
@@ -71,6 +74,10 @@ export const WidgetSelectionScreen = () => {
           variant="outline"
           onClick={handleNewConversation}
           disabled={isPending}
+          style={{
+            borderColor: primaryColor,
+            color: primaryColor,
+          }}
         >
           <div className="flex items-center gap-x-2">
             <MessageSquareTextIcon className="size-4" />
@@ -84,6 +91,10 @@ export const WidgetSelectionScreen = () => {
             variant="outline"
             onClick={() => setScreen("voice")}
             disabled={isPending}
+            style={{
+              borderColor: primaryColor,
+              color: primaryColor,
+            }}
           >
             <div className="flex items-center gap-x-2">
               <MicIcon className="size-4" />
@@ -98,6 +109,10 @@ export const WidgetSelectionScreen = () => {
             variant="outline"
             onClick={() => setScreen("contact")}
             disabled={isPending}
+            style={{
+              borderColor: primaryColor,
+              color: primaryColor,
+            }}
           >
             <div className="flex items-center gap-x-2">
               <PhoneIcon className="size-4" />
