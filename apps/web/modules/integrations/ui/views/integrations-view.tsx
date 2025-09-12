@@ -164,13 +164,13 @@ export const IntegrationsDialog = ({
                 {snippet}
               </pre>
               <Button
-                className="absolute top-4 right-6 size-6 opacity-0 transition-opacity group-hover:opacity-100"
+                className="absolute top-4 right-6 size-6 opacity-100 md:opacity-0 transition-opacity md:group-hover:opacity-100"
                 onClick={handleCopy}
                 size="icon"
                 variant="secondary"
               >
                 <CopyIcon className="size-3" />
-              </Button>
+            </Button>
             </div>
           </div>
 

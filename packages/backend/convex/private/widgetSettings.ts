@@ -9,6 +9,13 @@ export const upsert = mutation({
             suggestion2: v.optional(v.string()),
             suggestion3: v.optional(v.string()),
         }),
+        appearance: v.optional(
+            v.object({
+                primaryColor: v.string(),
+                position: v.union(v.literal("bottom-right"), v.literal("bottom-left")),
+                theme: v.union(v.literal("light"), v.literal("dark"), v.literal("auto")),
+            })
+        ),
         vapiSettings: v.object({
             assistantId: v.optional(v.string()),
             phoneNumber: v.optional(v.string()),
@@ -42,6 +49,7 @@ export const upsert = mutation({
         await ctx.db.patch(existingWidgetSettings._id, {
             greetMessage: args.greetMessage,
             defaultSuggestions: args.defaultSuggestions,
+            appearance: args.appearance, // ADD THIS LINE
             vapiSettings: args.vapiSettings,
         });
       } else {
@@ -49,6 +57,7 @@ export const upsert = mutation({
             organizationId: orgId,
             greetMessage: args.greetMessage,
             defaultSuggestions: args.defaultSuggestions,
+            appearance: args.appearance, // ADD THIS LINE
             vapiSettings: args.vapiSettings,
         });
       }

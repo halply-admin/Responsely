@@ -1,3 +1,5 @@
+// packages/backend/convex/schema.ts
+
 import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
@@ -7,20 +9,39 @@ export default defineSchema({
     status: v.string(),
   })
     .index("by_organization_id", ["organizationId"]),
+
   widgetSettings: defineTable({
     organizationId: v.string(),
     greetMessage: v.string(),
-    defaultSuggestions: v.object({
-      suggestion1: v.optional(v.string()),
-      suggestion2: v.optional(v.string()),
-      suggestion3: v.optional(v.string()),
-    }),
-    vapiSettings: v.object({
-      assistantId: v.optional(v.string()),
-      phoneNumber: v.optional(v.string()),
-    }),
+    
+    // Quick Suggestions
+    defaultSuggestions: v.optional(
+      v.object({
+        suggestion1: v.optional(v.string()),
+        suggestion2: v.optional(v.string()),
+        suggestion3: v.optional(v.string()),
+      })
+    ),
+    
+    // Appearance Settings - NEW ADDITION
+    appearance: v.optional(
+      v.object({
+        primaryColor: v.string(),
+        position: v.union(v.literal("bottom-right"), v.literal("bottom-left")),
+        theme: v.union(v.literal("light"), v.literal("dark"), v.literal("auto")),
+      })
+    ),
+    
+    // Voice Assistant Settings
+    vapiSettings: v.optional(
+      v.object({
+        assistantId: v.optional(v.string()),
+        phoneNumber: v.optional(v.string()),
+      })
+    ),
   })
-  .index("by_organization_id", ["organizationId"]),
+    .index("by_organization_id", ["organizationId"]),
+
   plugins: defineTable({
     organizationId: v.string(),
     service: v.union(v.literal("vapi")),
@@ -28,6 +49,7 @@ export default defineSchema({
   })
     .index("by_organization_id", ["organizationId"])
     .index("by_organization_id_and_service", ["organizationId", "service"]),
+
   conversations: defineTable({
     threadId: v.string(),
     organizationId: v.string(),
@@ -42,6 +64,7 @@ export default defineSchema({
     .index("by_contact_session_id", ["contactSessionId"])
     .index("by_thread_id", ["threadId"])
     .index("by_status_and_organization_id", ["status", "organizationId"]),
+
   contactSessions: defineTable({
     name: v.string(),
     email: v.string(),
@@ -62,8 +85,9 @@ export default defineSchema({
       currentUrl: v.optional(v.string()),
     }))
   })
-  .index("by_organization_id", ["organizationId"])
-  .index("by_expires_at", ["expiresAt"]),
+    .index("by_organization_id", ["organizationId"])
+    .index("by_expires_at", ["expiresAt"]),
+
   users: defineTable({
     name: v.string(),
   }),
