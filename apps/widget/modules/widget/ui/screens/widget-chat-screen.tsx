@@ -162,6 +162,7 @@ export const WidgetChatScreen = () => {
             )
           })}
         </AIConversationContent>
+        <AIConversationScrollButton />
       </AIConversation>
       {toUIMessages(messages.results ?? [])?.length === 1 && (
         <AISuggestions className="flex w-full flex-col items-end p-2">
