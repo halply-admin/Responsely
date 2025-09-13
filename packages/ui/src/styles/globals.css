@@ -59,9 +59,9 @@
   --tracking-normal: 0em;
   --spacing: 0.25rem;
   
-  /* Widget-specific CSS variables */
-  --widget-primary-color: #3b82f6;
-  --widget-primary-rgb: 59, 130, 246;
+  /* Widget-specific CSS variables - UPDATED to prevent blue flash on load */
+  --widget-primary-color: transparent;
+  --widget-primary-rgb: 255, 255, 255;
 }
 
 .dark {

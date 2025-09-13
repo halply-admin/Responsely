@@ -1,5 +1,6 @@
 "use client";
 
+import { AISuggestion, AISuggestions } from "@workspace/ui/components/ai/suggestion";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -22,18 +23,17 @@ import {
 } from "@workspace/ui/components/ai/conversation";
 import {
   AIInput,
+  AIInputSubmit,
   AIInputTextarea,
   AIInputToolbar,
   AIInputTools,
 } from "@workspace/ui/components/ai/input";
+import {
+  AIMessage,
+  AIMessageContent,
+} from "@workspace/ui/components/ai/message";
 import { AIResponse } from "@workspace/ui/components/ai/response";
-
-// Import styled components
-import { 
-  StyledAIMessage, 
-  StyledAIMessageContent, 
-  StyledAIInputSubmit 
-} from "../components/styled-ai-components";
+import { useMemo } from "react";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -54,6 +54,16 @@ export const WidgetChatScreen = () => {
     setConversationId(null);
     setScreen("selection");
   };
+
+  const suggestions = useMemo(() => {
+    if (!widgetSettings?.defaultSuggestions) {
+      return [];
+    }
+
+    return Object.values(widgetSettings.defaultSuggestions).filter((suggestion): suggestion is string => 
+      Boolean(suggestion)
+    );
+  }, [widgetSettings]);
 
   const conversation = useQuery(
     api.public.conversations.getOne,
@@ -124,7 +134,6 @@ export const WidgetChatScreen = () => {
           <MenuIcon />
         </Button>
       </WidgetHeader>
-
       <AIConversation>
         <AIConversationContent>
           <InfiniteScrollTrigger
@@ -135,13 +144,13 @@ export const WidgetChatScreen = () => {
           />
           {toUIMessages(messages.results ?? [])?.map((message) => {
             return (
-              <StyledAIMessage
+              <AIMessage
                 from={message.role === "user" ? "user" : "assistant"}
                 key={message.id}
               >
-                <StyledAIMessageContent from={message.role === "user" ? "user" : "assistant"}>
+                <AIMessageContent>
                   <AIResponse>{message.content}</AIResponse>
-                </StyledAIMessageContent>
+                </AIMessageContent>
                 {message.role === "assistant" && (
                   <DicebearAvatar
                     imageUrl="/logo.svg"
@@ -149,50 +158,73 @@ export const WidgetChatScreen = () => {
                     size={32}
                   />
                 )}
-              </StyledAIMessage>
+              </AIMessage>
             )
           })}
         </AIConversationContent>
         <AIConversationScrollButton />
       </AIConversation>
-      
-      <Form {...form}>
-        <AIInput
-          className="rounded-none border-x-0 border-b-0"
-          onSubmit={form.handleSubmit(onSubmit)}
-        >
-          <FormField
-            control={form.control}
-            disabled={conversation?.status === "resolved"}
-            name="message"
-            render={({ field }) => (
-              <AIInputTextarea
-                disabled={conversation?.status === "resolved"}
-                onChange={field.onChange}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !e.shiftKey) {
-                    e.preventDefault();
-                    form.handleSubmit(onSubmit)();
-                  }
+      {toUIMessages(messages.results ?? [])?.length === 1 && (
+        <AISuggestions className="flex w-full flex-col items-end p-2">
+          {suggestions.map((suggestion) => {
+            if (!suggestion) {
+              return null;
+            }
+
+            return (
+              <AISuggestion
+                key={suggestion}
+                onClick={() => {
+                  form.setValue("message", suggestion, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                  form.handleSubmit(onSubmit)();
                 }}
-                placeholder={
-                  conversation?.status === "resolved"
-                    ? "This conversation has been resolved."
-                    : "Type your message..."
-                }
-                value={field.value}
+                suggestion={suggestion}
               />
-            )}
-          />
-          <AIInputToolbar>
-            <AIInputTools />
-            <StyledAIInputSubmit
-              disabled={conversation?.status === "resolved" || !form.formState.isValid}
-              status="ready"
-              type="submit"
+            )
+          })}
+        </AISuggestions>
+      )}
+      <Form {...form}>
+          <AIInput
+            className="rounded-none border-x-0 border-b-0"
+            onSubmit={form.handleSubmit(onSubmit)}
+          >
+            <FormField
+              control={form.control}
+              disabled={conversation?.status === "resolved"}
+              name="message"
+              render={({ field }) => (
+                <AIInputTextarea
+                  disabled={conversation?.status === "resolved"}
+                  onChange={field.onChange}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      form.handleSubmit(onSubmit)();
+                    }
+                  }}
+                  placeholder={
+                    conversation?.status === "resolved"
+                      ? "This conversation has been resolved."
+                      : "Type your message..."
+                  }
+                  value={field.value}
+                />
+              )}
             />
-          </AIInputToolbar>
-        </AIInput>
+            <AIInputToolbar>
+              <AIInputTools />
+              <AIInputSubmit
+                disabled={conversation?.status === "resolved" || !form.formState.isValid}
+                status="ready"
+                type="submit"
+              />
+            </AIInputToolbar>
+          </AIInput>
       </Form>
     </>
   );

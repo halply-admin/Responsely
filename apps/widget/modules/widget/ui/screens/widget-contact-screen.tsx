@@ -1,32 +1,35 @@
-import { useAtomValue, useSetAtom } from "jotai"
-import { screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms"
-import { WidgetHeader } from "../components/widget-header"
-import { Button } from "@workspace/ui/components/button"
-import { useState } from "react"
-import { ArrowLeftIcon, CheckIcon, PhoneIcon } from "lucide-react"
-import Link from "next/link"
+import { ArrowLeftIcon, CheckIcon, CopyIcon, PhoneIcon } from "lucide-react";
+import { Button } from "@workspace/ui/components/button";
+import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
+import { useAtomValue, useSetAtom } from "jotai";
+import { screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms";
+import { useState } from "react";
+import Link from "next/link";
 
 export const WidgetContactScreen = () => {
-  const setScreen = useSetAtom(screenAtom)
-  const widgetSettings = useAtomValue(widgetSettingsAtom)
+  const setScreen = useSetAtom(screenAtom);
+  const widgetSettings = useAtomValue(widgetSettingsAtom);
 
-  const phoneNumber = widgetSettings?.vapiSettings?.phoneNumber
+  const phoneNumber = widgetSettings?.vapiSettings?.phoneNumber;
+  
+  // Get primary color for "Call Now" button styling
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
 
-  const [copied, setCopied] = useState(false)
+  const [copied, setCopied] = useState(false);
   const handleCopy = async () => {
     if (!phoneNumber) {
-      return
+      return;
     }
 
     try {
-      await navigator.clipboard.writeText(phoneNumber)
-      setCopied(true)
+      await navigator.clipboard.writeText(phoneNumber);
+      setCopied(true);
     } catch (error) {
-      console.error(error)
+      console.error(error);
     } finally {
-      setTimeout(() => setCopied(false), 2000)
+      setTimeout(() => setCopied(false), 2000);
     }
-  }
+  };
 
   return (
     <>
@@ -51,27 +54,47 @@ export const WidgetContactScreen = () => {
       </div>
       <div className="border-t bg-background p-4">
         <div className="flex flex-col items-center gap-y-2">
-          <Button className="w-full" size="lg" onClick={handleCopy} variant="outline">
-            (copied ? (
+          <Button
+            className="w-full"
+            onClick={handleCopy}
+            size="lg"
+            variant="outline"
+          >
+            {copied ? (
               <>
                 <CheckIcon className="mr-2 size-4" />
                 Copied!
               </>
             ) : (
               <>
-                <CheckIcon className="mr-2 size-4" />
-                Copied!
+                <CopyIcon className="mr-2 size-4" />
+                Copy Number
               </>
-            ))
+            )}
           </Button>
-          <Button asChild className="w-full" size="lg">
+          <Button 
+            asChild 
+            className="w-full" 
+            size="lg"
+            style={{
+              backgroundColor: primaryColor,
+              borderColor: primaryColor,
+              color: "white"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.9";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+            }}
+          >
             <Link href={`tel:${phoneNumber}`}>
-              <PhoneIcon/>
+              <PhoneIcon />
               Call Now
             </Link>
           </Button>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
