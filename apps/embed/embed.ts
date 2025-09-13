@@ -50,12 +50,19 @@ import { chatBubbleIcon, closeIcon } from './icons';
     return `rgba(${r}, ${g}, ${b}, ${opacity})`;
   }
 
-  // Update button styling with new color
   function updateButtonColor(color: string) {
     if (button) {
       primaryColor = color;
       button.style.background = primaryColor;
       button.style.boxShadow = `0 4px 24px ${generateShadowColor(primaryColor)}`;
+      
+      // Update CSS variable for the widget iframe
+      if (iframe) {
+        iframe.contentWindow?.postMessage({
+          type: 'updateCSSVariable',
+          payload: { primaryColor: color }
+        }, '*');
+      }
     }
   }
   

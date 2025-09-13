@@ -152,15 +152,24 @@ export const WidgetLoadingScreen = ({ organizationId }: { organizationId: string
     setScreen(hasValidSession ? "selection" : "auth");
   }, [step, contactSessionId, sessionValid, setScreen]);
 
+  // Add this effect to send color to embed when widget loads
   useEffect(() => {
     if (widgetSettings?.appearance?.primaryColor) {
       // Send the primary color to the parent window (embed script)
-      window.parent.postMessage({
-        type: 'updatePrimaryColor',
-        payload: {
-          primaryColor: widgetSettings.appearance.primaryColor
-        }
-      }, '*');
+      const sendColorUpdate = () => {
+        window.parent.postMessage({
+          type: 'updatePrimaryColor',
+          payload: {
+            primaryColor: widgetSettings.appearance!.primaryColor
+          }
+        }, '*');
+      };
+
+      // Send immediately
+      sendColorUpdate();
+      
+      // Also send after a short delay to ensure embed is ready
+      setTimeout(sendColorUpdate, 100);
     }
   }, [widgetSettings?.appearance?.primaryColor]);
 

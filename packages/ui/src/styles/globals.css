@@ -186,39 +186,57 @@
   }
 }
 
-/* Widget-specific styling for AI messages */
+/* Enhanced Widget-specific styling for AI messages */
 @layer components {
   /* User message styling with dynamic primary color */
-  .group.is-user .break-words {
-    background: var(--widget-primary-color, #3b82f6) !important;
+  .group.is-user .break-words,
+  .widget-primary-bg {
+    background-color: var(--widget-primary-color, #3b82f6) !important;
     color: white !important;
     border: none !important;
   }
 
-  /* Style the AI input submit button */
+  /* Style ALL AI input submit buttons - Enhanced selectors */
   .ai-input-submit,
-  [data-submit-button="true"] {
+  [data-submit-button="true"],
+  .widget-submit-button,
+  button[type="submit"][class*="rounded-br-lg"],
+  form[class*="AIInput"] button[type="submit"],
+  div[class*="AIInput"] button[type="submit"],
+  .ai-input-toolbar button[type="submit"] {
     background-color: var(--widget-primary-color, #3b82f6) !important;
     color: white !important;
     border-color: var(--widget-primary-color, #3b82f6) !important;
   }
 
   .ai-input-submit:hover,
-  [data-submit-button="true"]:hover {
+  [data-submit-button="true"]:hover,
+  .widget-submit-button:hover,
+  button[type="submit"][class*="rounded-br-lg"]:hover,
+  form[class*="AIInput"] button[type="submit"]:hover,
+  div[class*="AIInput"] button[type="submit"]:hover,
+  .ai-input-toolbar button[type="submit"]:hover {
     opacity: 0.9 !important;
   }
 
-  /* Primary color application for interactive elements */
   .widget-primary-bg {
     background-color: var(--widget-primary-color, #3b82f6) !important;
   }
-
+  
   .widget-primary-text {
     color: var(--widget-primary-color, #3b82f6) !important;
   }
-
+  
   .widget-primary-border {
     border-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+  
+  /* Additional user message styling override for AI components */
+  .group.is-user [class*="break-words"],
+  .group.is-user [class*="flex"][class*="flex-col"] {
+    background: linear-gradient(135deg, var(--widget-primary-color, #3b82f6), var(--widget-primary-color, #3b82f6)) !important;
+    color: white !important;
+    border-color: transparent !important;
   }
 
   /* Suggestion buttons styling */
