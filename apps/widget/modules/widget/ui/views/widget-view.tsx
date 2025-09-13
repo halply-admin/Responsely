@@ -12,6 +12,7 @@ import { WidgetInboxScreen } from "@/modules/widget/ui/screens/widget-inbox-scre
 import { WidgetVoiceScreen } from "@/modules/widget/ui/screens/widget-voice-screen";
 import { screenAtom } from "@/modules/widget/atoms/widget-atoms";
 import { WidgetContactScreen } from "../screens/widget-contact-screen";
+import { WidgetColorProvider } from "../components/widget-color-provider"; // ADD THIS
 
 interface Props {
     organizationId: string | null;
@@ -32,8 +33,10 @@ export const WidgetView = ({ organizationId }: Props) => {
     }
     
     return (
-        <main className="flex h-full w-full flex-col overflow-hidden rounded-xl border bg-muted">
-            {screenComponents[screen]}
-        </main>
+        <WidgetColorProvider> {/* WRAP EVERYTHING */}
+            <main className="flex h-full w-full flex-col overflow-hidden rounded-xl border bg-muted">
+                {screenComponents[screen]}
+            </main>
+        </WidgetColorProvider>
     )   
 }

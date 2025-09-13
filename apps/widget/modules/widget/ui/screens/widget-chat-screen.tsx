@@ -175,35 +175,6 @@ export const WidgetChatScreen = () => {
         <AIConversationScrollButton />
       </AIConversation>
       
-      {/* Show suggestions when appropriate */}
-      {toUIMessages(messages.results ?? [])?.length === 1 && suggestions.length > 0 && (
-        <AISuggestions className="flex w-full flex-col items-end p-2">
-          {suggestions.map((suggestion) => {
-            if (!suggestion) {
-              return null;
-            }
-
-            return (
-              <Button
-                key={suggestion}
-                variant="outline"
-                className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal hover:shadow-sm transition-all duration-200"
-                onClick={() => {
-                  form.setValue("message", suggestion, {
-                    shouldValidate: true,
-                    shouldDirty: true,
-                    shouldTouch: true,
-                  });
-                  form.handleSubmit(onSubmit)();
-                }}
-              >
-                {suggestion}
-              </Button>
-            );
-          })}
-        </AISuggestions>
-      )}
-      
       <Form {...form}>
         <AIInput
           className="rounded-none border-x-0 border-b-0"
