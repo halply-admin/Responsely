@@ -15,7 +15,7 @@ import { useMutation } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
 import { Doc } from "@workspace/backend/_generated/dataModel";
 import { useAtomValue, useSetAtom } from "jotai";
-import { contactSessionIdAtomFamily, organizationIdAtom, screenAtom } from "../../atoms/widget-atoms";
+import { contactSessionIdAtomFamily, organizationIdAtom, screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -26,9 +26,13 @@ export const WidgetAuthScreen = () => {
   const setScreen = useSetAtom(screenAtom);
 
   const organizationId = useAtomValue(organizationIdAtom);
+  const widgetSettings = useAtomValue(widgetSettingsAtom);
   const setContactSessionId = useSetAtom(
     contactSessionIdAtomFamily(organizationId || "")
   );
+
+  // Get the primary color from widget settings
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -125,6 +129,18 @@ export const WidgetAuthScreen = () => {
             disabled={form.formState.isSubmitting}
             size="lg"
             type="submit"
+            className="widget-submit-button"
+            style={{
+              backgroundColor: primaryColor,
+              borderColor: primaryColor,
+              color: "white"
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.opacity = "0.9";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.opacity = "1";
+            }}
           >
             Continue
           </Button>
