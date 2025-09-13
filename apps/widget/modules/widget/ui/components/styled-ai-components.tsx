@@ -55,14 +55,15 @@ export const StyledAIMessageContent = ({
       className={cn(
         "break-words",
         "flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm",
-        !isUserMessage && "bg-background text-foreground border-border",
-        isUserMessage && "widget-primary-bg text-white border-transparent", // Use CSS class
+        // Use CSS classes for better performance and consistency
+        isUserMessage ? "widget-primary-bg text-white border-transparent" : "bg-background text-foreground border-border",
         className
       )}
+      // Fallback inline styles in case CSS variables aren't loaded yet
       style={isUserMessage ? {
-        backgroundColor: primaryColor, // Fallback
+        backgroundColor: primaryColor,
         color: "white",
-        border: "none",
+        borderColor: "transparent",
       } : {}}
       {...props}
     >
@@ -82,8 +83,12 @@ export const StyledAIInputSubmit = ({
 
   return (
     <BaseAIInputSubmit
-      className={cn("gap-1.5 rounded-md rounded-br-lg widget-submit-button", className)}
+      className={cn(
+        "gap-1.5 rounded-md rounded-br-lg widget-submit-button",
+        className
+      )}
       variant={variant}
+      // Inline styles as fallback - CSS classes will override these
       style={{
         backgroundColor: primaryColor,
         color: "white",

@@ -219,17 +219,24 @@
     opacity: 0.9 !important;
   }
 
-  /* Primary color application for interactive elements */
   .widget-primary-bg {
     background-color: var(--widget-primary-color, #3b82f6) !important;
   }
-
+  
   .widget-primary-text {
     color: var(--widget-primary-color, #3b82f6) !important;
   }
-
+  
   .widget-primary-border {
     border-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+  
+  /* Additional user message styling override for AI components */
+  .group.is-user [class*="break-words"],
+  .group.is-user [class*="flex"][class*="flex-col"] {
+    background: linear-gradient(135deg, var(--widget-primary-color, #3b82f6), var(--widget-primary-color, #3b82f6)) !important;
+    color: white !important;
+    border-color: transparent !important;
   }
 
   /* Suggestion buttons styling */
