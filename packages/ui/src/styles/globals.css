@@ -58,6 +58,10 @@
   --shadow-2xl: 0 1px 3px 0px hsl(0 0% 0% / 0.25);
   --tracking-normal: 0em;
   --spacing: 0.25rem;
+  
+  /* Widget-specific CSS variables */
+  --widget-primary-color: #3b82f6;
+  --widget-primary-rgb: 59, 130, 246;
 }
 
 .dark {
@@ -179,5 +183,60 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
     font-weight: 500;
+  }
+}
+
+/* Widget-specific styling for AI messages */
+@layer components {
+  /* User message styling with dynamic primary color */
+  .group.is-user .break-words {
+    background: var(--widget-primary-color, #3b82f6) !important;
+    color: white !important;
+    border: none !important;
+  }
+
+  /* Style the AI input submit button */
+  .ai-input-submit,
+  [data-submit-button="true"] {
+    background-color: var(--widget-primary-color, #3b82f6) !important;
+    color: white !important;
+    border-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  .ai-input-submit:hover,
+  [data-submit-button="true"]:hover {
+    opacity: 0.9 !important;
+  }
+
+  /* Primary color application for interactive elements */
+  .widget-primary-bg {
+    background-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  .widget-primary-text {
+    color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  .widget-primary-border {
+    border-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  /* Suggestion buttons styling */
+  .ai-suggestion-button {
+    border-color: var(--widget-primary-color, #3b82f6) !important;
+    color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  .ai-suggestion-button:hover {
+    background-color: rgba(var(--widget-primary-rgb), 0.1) !important;
+    border-color: var(--widget-primary-color, #3b82f6) !important;
+  }
+
+  /* Additional user message styling override for AI components */
+  .group.is-user [class*="break-words"],
+  .group.is-user [class*="flex"][class*="flex-col"] {
+    background: linear-gradient(135deg, var(--widget-primary-color, #3b82f6), var(--widget-primary-color, #3b82f6)) !important;
+    color: white !important;
+    border-color: transparent !important;
   }
 }
