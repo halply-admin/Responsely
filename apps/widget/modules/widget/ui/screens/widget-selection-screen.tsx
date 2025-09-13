@@ -22,6 +22,9 @@ export const WidgetSelectionScreen = () => {
     contactSessionIdAtomFamily(organizationId || "")
   );
 
+  // Add primary color inheritance
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
+
   const createConversation = useMutation(api.public.conversations.create);
   const [isPending, setIsPending] = useState(false);
 
@@ -71,6 +74,16 @@ export const WidgetSelectionScreen = () => {
           variant="outline"
           onClick={handleNewConversation}
           disabled={isPending}
+          style={{
+            borderColor: primaryColor,
+            color: primaryColor
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = primaryColor + '10';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.backgroundColor = 'transparent';
+          }}
         >
           <div className="flex items-center gap-x-2">
             <MessageSquareTextIcon className="size-4" />
@@ -84,6 +97,16 @@ export const WidgetSelectionScreen = () => {
             variant="outline"
             onClick={() => setScreen("voice")}
             disabled={isPending}
+            style={{
+              borderColor: primaryColor,
+              color: primaryColor
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = primaryColor + '10';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <div className="flex items-center gap-x-2">
               <MicIcon className="size-4" />
@@ -98,6 +121,16 @@ export const WidgetSelectionScreen = () => {
             variant="outline"
             onClick={() => setScreen("contact")}
             disabled={isPending}
+            style={{
+              borderColor: primaryColor,
+              color: primaryColor
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = primaryColor + '10';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'transparent';
+            }}
           >
             <div className="flex items-center gap-x-2">
               <PhoneIcon className="size-4" />
