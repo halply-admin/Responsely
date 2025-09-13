@@ -1,3 +1,6 @@
+// apps/widget/modules/widget/ui/screens/widget-chat-screen.tsx
+// MISSING UPDATE: Need to use styled components for primary colors
+
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -22,20 +25,22 @@ import {
 } from "@workspace/ui/components/ai/conversation";
 import {
   AIInput,
-  AIInputSubmit,
   AIInputTextarea,
   AIInputToolbar,
   AIInputTools,
 } from "@workspace/ui/components/ai/input";
-import {
-  AIMessage,
-  AIMessageContent,
-} from "@workspace/ui/components/ai/message";
 import { AIResponse } from "@workspace/ui/components/ai/response";
 import {
-  AISuggestion,
   AISuggestions,
 } from "@workspace/ui/components/ai/suggestion";
+
+// *** CRITICAL ADDITION: Import styled components ***
+import { 
+  StyledAIMessage, 
+  StyledAIMessageContent, 
+  StyledAIInputSubmit 
+} from "../components/styled-ai-components";
+
 import { useMemo } from "react";
 
 const formSchema = z.object({
@@ -53,28 +58,19 @@ export const WidgetChatScreen = () => {
     contactSessionIdAtomFamily(organizationId || "")
   );
 
-  // Get the primary color from widget settings
-  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
-
   const onBack = () => {
     setConversationId(null);
     setScreen("selection");
   };
 
+  // *** FIX: Proper suggestions handling ***
   const suggestions = useMemo(() => {
     if (!widgetSettings?.defaultSuggestions) {
       return [];
     }
-
-    // Transform object into array, filtering out undefined and empty values
-    return Object.keys(widgetSettings?.defaultSuggestions ?? {})
-      .map((key) => {
-        return widgetSettings?.defaultSuggestions?.[
-          key as keyof typeof widgetSettings.defaultSuggestions
-        ];
-      })
-      .filter((suggestion): suggestion is string => Boolean(suggestion && suggestion.trim()));
-  }, [widgetSettings?.defaultSuggestions]);
+    // Transform object into array, filter out empty/undefined values
+    return Object.values(widgetSettings.defaultSuggestions).filter(Boolean);
+  }, [widgetSettings]);
 
   const conversation = useQuery(
     api.public.conversations.getOne,
@@ -145,6 +141,7 @@ export const WidgetChatScreen = () => {
           <MenuIcon />
         </Button>
       </WidgetHeader>
+      
       <AIConversation>
         <AIConversationContent>
           <InfiniteScrollTrigger
@@ -155,97 +152,96 @@ export const WidgetChatScreen = () => {
           />
           {toUIMessages(messages.results ?? [])?.map((message) => {
             return (
-              <AIMessage
+              // *** CRITICAL FIX: Use StyledAIMessage instead of AIMessage ***
+              <StyledAIMessage
                 from={message.role === "user" ? "user" : "assistant"}
                 key={message.id}
               >
-                <AIMessageContent>
+                {/* *** CRITICAL FIX: Use StyledAIMessageContent ***/ }
+                <StyledAIMessageContent>
                   <AIResponse>{message.content}</AIResponse>
-                </AIMessageContent>
+                </StyledAIMessageContent>
                 {message.role === "assistant" && (
-                  <div 
-                    className="flex h-8 w-8 items-center justify-center rounded-full border"
-                    style={{
-                      backgroundColor: primaryColor,
-                    }}
-                  >
-                    <DicebearAvatar
-                      imageUrl="/logo.svg"
-                      seed="assistant"
-                      size={32}
-                    />
-                  </div>
+                  <DicebearAvatar
+                    imageUrl="/logo.svg"
+                    seed="assistant"
+                    size={32}
+                  />
                 )}
-              </AIMessage>
+              </StyledAIMessage>
             )
           })}
         </AIConversationContent>
+        <AIConversationScrollButton />
       </AIConversation>
-      {toUIMessages(messages.results ?? [])?.length === 1 && (
-      <AISuggestions className="flex w-full flex-col items-end p-2">
-        {suggestions.map((suggestion) => {
-           return (
-            <AISuggestion 
-              key={suggestion} 
-              onClick={() =>{
-                form.setValue("message", suggestion, {
-                  shouldValidate: true,
-                  shouldDirty: true,
-                  shouldTouch: true,
-                });
-                form.handleSubmit(onSubmit)();
-              }} 
-              suggestion={suggestion}
-              style={{
-                borderColor: primaryColor,
-                color: primaryColor,
-              }}
-            />
-          );
-          })}
-      </AISuggestions>
-      )}
-      <Form {...form}>
-          <AIInput
-            className="rounded-none border-x-0 border-b-0"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
-            <FormField
-              control={form.control}
-              disabled={conversation?.status === "resolved"}
-              name="message"
-              render={({ field }) => (
-                <AIInputTextarea
-                  disabled={conversation?.status === "resolved"}
-                  onChange={field.onChange}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      form.handleSubmit(onSubmit)();
-                    }
-                  }}
-                  placeholder={
-                    conversation?.status === "resolved"
-                      ? "This conversation has been resolved."
-                      : "Type your message..."
-                  }
-                  value={field.value}
-                />
-              )}
-            />
-            <AIInputToolbar>
-              <AIInputTools />
-              <AIInputSubmit
-                disabled={conversation?.status === "resolved" || !form.formState.isValid}
-                status="ready"
-                type="submit"
-                style={{
-                  backgroundColor: primaryColor,
-                  borderColor: primaryColor,
+      
+      {/* Show suggestions when appropriate */}
+      {toUIMessages(messages.results ?? [])?.length === 1 && suggestions.length > 0 && (
+        <AISuggestions className="flex w-full flex-col items-end p-2">
+          {suggestions.map((suggestion) => {
+            if (!suggestion) {
+              return null;
+            }
+
+            return (
+              <Button
+                key={suggestion}
+                variant="outline"
+                className="w-full justify-start text-left h-auto py-3 px-4 whitespace-normal hover:shadow-sm transition-all duration-200"
+                onClick={() => {
+                  form.setValue("message", suggestion, {
+                    shouldValidate: true,
+                    shouldDirty: true,
+                    shouldTouch: true,
+                  });
+                  form.handleSubmit(onSubmit)();
                 }}
+              >
+                {suggestion}
+              </Button>
+            );
+          })}
+        </AISuggestions>
+      )}
+      
+      <Form {...form}>
+        <AIInput
+          className="rounded-none border-x-0 border-b-0"
+          onSubmit={form.handleSubmit(onSubmit)}
+        >
+          <FormField
+            control={form.control}
+            disabled={conversation?.status === "resolved"}
+            name="message"
+            render={({ field }) => (
+              <AIInputTextarea
+                disabled={conversation?.status === "resolved"}
+                onChange={field.onChange}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    form.handleSubmit(onSubmit)();
+                  }
+                }}
+                placeholder={
+                  conversation?.status === "resolved"
+                    ? "This conversation has been resolved."
+                    : "Type your message..."
+                }
+                value={field.value}
               />
-            </AIInputToolbar>
-          </AIInput>
+            )}
+          />
+          <AIInputToolbar>
+            <AIInputTools />
+            {/* *** CRITICAL FIX: Use StyledAIInputSubmit instead of AIInputSubmit ***/ }
+            <StyledAIInputSubmit
+              disabled={conversation?.status === "resolved" || !form.formState.isValid}
+              status="ready"
+              type="submit"
+            />
+          </AIInputToolbar>
+        </AIInput>
       </Form>
     </>
   );

@@ -42,43 +42,36 @@ export const StyledAIMessage = ({ className, from, ...props }: AIMessageProps) =
 
 // Styled AI Message Content that uses primary color for user messages
 export const StyledAIMessageContent = ({
-  children,
-  className,
-  ...props
-}: AIMessageContentProps) => {
-  const widgetSettings = useAtomValue(widgetSettingsAtom);
-  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
-
-  return (
-    <div
-      className={cn(
-        "break-words",
-        "flex flex-col gap-2 rounded-lg border border-border px-3 py-2 text-sm",
-        "bg-background text-foreground",
-        // User message styling with dynamic primary color
-        "group-[.is-user]:border-transparent group-[.is-user]:text-primary-foreground",
-        className
-      )}
-      style={{
-        // Apply primary color background for user messages
-        background: `var(--is-user-bg, var(--background))`,
-        color: `var(--is-user-text, var(--foreground))`,
-      }}
-      {...props}
-    >
-      <div 
-        className="is-user:dark"
+    children,
+    className,
+    ...props
+  }: AIMessageContentProps) => {
+    const widgetSettings = useAtomValue(widgetSettingsAtom);
+    const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
+  
+    return (
+      <div
+        className={cn(
+          "break-words",
+          "flex flex-col gap-2 rounded-lg border border-border px-3 py-2 text-sm",
+          "bg-background text-foreground",
+          "group-[.is-user]:border-transparent group-[.is-user]:text-primary-foreground",
+          className
+        )}
         style={{
-          // CSS variables that get applied when this is a user message
-          "--is-user-bg": primaryColor,
-          "--is-user-text": "white",
+          // Apply primary color directly when this is a user message
+          backgroundColor: `var(--user-message-bg, var(--background))`,
+          color: `var(--user-message-text, var(--foreground))`,
+          // Set the CSS variables at the same level
+          "--user-message-bg": primaryColor,
+          "--user-message-text": "white",
         } as React.CSSProperties}
+        {...props}
       >
         {children}
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 // Styled AI Input Submit button with primary color
 export const StyledAIInputSubmit = ({
