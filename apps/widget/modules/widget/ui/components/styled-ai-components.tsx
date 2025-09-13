@@ -1,6 +1,3 @@
-// Create wrapper components that apply widget colors to AI components
-// apps/widget/modules/widget/ui/components/styled-ai-components.tsx
-
 "use client";
 
 import { useAtomValue } from "jotai";
@@ -42,35 +39,37 @@ export const StyledAIMessage = ({ className, from, ...props }: AIMessageProps) =
 
 // Styled AI Message Content that uses primary color for user messages
 export const StyledAIMessageContent = ({
-    children,
-    className,
-    ...props
-  }: AIMessageContentProps) => {
-    const widgetSettings = useAtomValue(widgetSettingsAtom);
-    const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
-    
-    // Check if parent is a user message
-    const isUserMessage = className?.includes('is-user');
+  children,
+  className,
+  from, // Add this prop to detect user messages
+  ...props
+}: AIMessageContentProps & { from?: "user" | "assistant" }) => {
+  const widgetSettings = useAtomValue(widgetSettingsAtom);
+  const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
   
-    return (
-      <div
-        className={cn(
-          "break-words",
-          "flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm",
-          !isUserMessage && "bg-background text-foreground border-border",
-          className
-        )}
-        style={isUserMessage ? {
-          backgroundColor: primaryColor,
-          color: "white",
-          border: "none",
-        } : {}}
-        {...props}
-      >
-        {children}
-      </div>
-    );
-  };
+  // Check if this is a user message
+  const isUserMessage = from === "user" || className?.includes('is-user');
+
+  return (
+    <div
+      className={cn(
+        "break-words",
+        "flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm",
+        !isUserMessage && "bg-background text-foreground border-border",
+        isUserMessage && "widget-primary-bg text-white border-transparent", // Use CSS class
+        className
+      )}
+      style={isUserMessage ? {
+        backgroundColor: primaryColor, // Fallback
+        color: "white",
+        border: "none",
+      } : {}}
+      {...props}
+    >
+      {children}
+    </div>
+  );
+};
 
 // Styled AI Input Submit button with primary color
 export const StyledAIInputSubmit = ({
@@ -83,15 +82,15 @@ export const StyledAIInputSubmit = ({
 
   return (
     <BaseAIInputSubmit
-    className={cn("gap-1.5 rounded-md rounded-br-lg", className)}
-    variant={variant}
-    style={{
+      className={cn("gap-1.5 rounded-md rounded-br-lg widget-submit-button", className)}
+      variant={variant}
+      style={{
         backgroundColor: primaryColor,
         color: "white",
         borderColor: primaryColor,
-    }}
-    data-submit-button="true"  // Add this
-    {...props}
+      }}
+      data-submit-button="true"
+      {...props}
     />
   );
 };

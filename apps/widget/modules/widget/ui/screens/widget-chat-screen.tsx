@@ -1,6 +1,3 @@
-// apps/widget/modules/widget/ui/screens/widget-chat-screen.tsx
-// MISSING UPDATE: Need to use styled components for primary colors
-
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -30,18 +27,13 @@ import {
   AIInputTools,
 } from "@workspace/ui/components/ai/input";
 import { AIResponse } from "@workspace/ui/components/ai/response";
-import {
-  AISuggestions,
-} from "@workspace/ui/components/ai/suggestion";
 
-// *** CRITICAL ADDITION: Import styled components ***
+// Import styled components
 import { 
   StyledAIMessage, 
   StyledAIMessageContent, 
   StyledAIInputSubmit 
 } from "../components/styled-ai-components";
-
-import { useMemo } from "react";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -62,15 +54,6 @@ export const WidgetChatScreen = () => {
     setConversationId(null);
     setScreen("selection");
   };
-
-  // *** FIX: Proper suggestions handling ***
-  const suggestions = useMemo(() => {
-    if (!widgetSettings?.defaultSuggestions) {
-      return [];
-    }
-    // Transform object into array, filter out empty/undefined values
-    return Object.values(widgetSettings.defaultSuggestions).filter(Boolean);
-  }, [widgetSettings]);
 
   const conversation = useQuery(
     api.public.conversations.getOne,
@@ -141,7 +124,7 @@ export const WidgetChatScreen = () => {
           <MenuIcon />
         </Button>
       </WidgetHeader>
-      
+
       <AIConversation>
         <AIConversationContent>
           <InfiniteScrollTrigger
@@ -152,13 +135,11 @@ export const WidgetChatScreen = () => {
           />
           {toUIMessages(messages.results ?? [])?.map((message) => {
             return (
-              // *** CRITICAL FIX: Use StyledAIMessage instead of AIMessage ***
               <StyledAIMessage
                 from={message.role === "user" ? "user" : "assistant"}
                 key={message.id}
               >
-                {/* *** CRITICAL FIX: Use StyledAIMessageContent ***/ }
-                <StyledAIMessageContent>
+                <StyledAIMessageContent from={message.role === "user" ? "user" : "assistant"}>
                   <AIResponse>{message.content}</AIResponse>
                 </StyledAIMessageContent>
                 {message.role === "assistant" && (
@@ -205,7 +186,6 @@ export const WidgetChatScreen = () => {
           />
           <AIInputToolbar>
             <AIInputTools />
-            {/* *** CRITICAL FIX: Use StyledAIInputSubmit instead of AIInputSubmit ***/ }
             <StyledAIInputSubmit
               disabled={conversation?.status === "resolved" || !form.formState.isValid}
               status="ready"
