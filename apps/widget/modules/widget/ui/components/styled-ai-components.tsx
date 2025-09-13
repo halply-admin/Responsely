@@ -48,24 +48,23 @@ export const StyledAIMessageContent = ({
   }: AIMessageContentProps) => {
     const widgetSettings = useAtomValue(widgetSettingsAtom);
     const primaryColor = widgetSettings?.appearance?.primaryColor || "#3b82f6";
+    
+    // Check if parent is a user message
+    const isUserMessage = className?.includes('is-user');
   
     return (
       <div
         className={cn(
           "break-words",
-          "flex flex-col gap-2 rounded-lg border border-border px-3 py-2 text-sm",
-          "bg-background text-foreground",
-          "group-[.is-user]:border-transparent group-[.is-user]:text-primary-foreground",
+          "flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm",
+          !isUserMessage && "bg-background text-foreground border-border",
           className
         )}
-        style={{
-          // Apply primary color directly when this is a user message
-          backgroundColor: `var(--user-message-bg, var(--background))`,
-          color: `var(--user-message-text, var(--foreground))`,
-          // Set the CSS variables at the same level
-          "--user-message-bg": primaryColor,
-          "--user-message-text": "white",
-        } as React.CSSProperties}
+        style={isUserMessage ? {
+          backgroundColor: primaryColor,
+          color: "white",
+          border: "none",
+        } : {}}
         {...props}
       >
         {children}
@@ -84,14 +83,15 @@ export const StyledAIInputSubmit = ({
 
   return (
     <BaseAIInputSubmit
-      className={cn("gap-1.5 rounded-md rounded-br-lg", className)}
-      variant={variant}
-      style={{
+    className={cn("gap-1.5 rounded-md rounded-br-lg", className)}
+    variant={variant}
+    style={{
         backgroundColor: primaryColor,
         color: "white",
         borderColor: primaryColor,
-      }}
-      {...props}
+    }}
+    data-submit-button="true"  // Add this
+    {...props}
     />
   );
 };
