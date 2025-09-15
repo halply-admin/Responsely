@@ -1,3 +1,6 @@
+// packages/backend/convex/http.ts
+// Final fix using proper Convex pattern
+
 import { Webhook } from "svix";
 import { createClerkClient } from "@clerk/backend";
 import type { WebhookEvent } from "@clerk/backend";
@@ -22,6 +25,7 @@ http.route({
     }
 
     switch (event.type) {
+      // EXISTING SUBSCRIPTION CASE - KEEP UNCHANGED
       case "subscription.updated": {
         const subscription = event.data as {
           status: string;
@@ -49,6 +53,30 @@ http.route({
 
         break;
       }
+
+      // NEW: Welcome email trigger
+      case "user.created": {
+        const user = event.data;
+        
+        try {
+          // Import the email action dynamically to avoid type issues
+          const { sendWelcomeEmail } = await import("./emails");
+          
+          await sendWelcomeEmail(ctx, {
+            userEmail: user.email_addresses[0]?.email_address || "",
+            userName: user.first_name || user.email_addresses[0]?.email_address || "there",
+            userId: user.id,
+          });
+
+          console.log(`Welcome email triggered for user: ${user.id}`);
+        } catch (emailError) {
+          console.error("Failed to send welcome email:", emailError);
+          // Don't fail the webhook if email fails
+        }
+        
+        break;
+      }
+
       default:
         console.log("Ignored Clerk webhook event", event.type);
     }
@@ -57,6 +85,7 @@ http.route({
   }),
 });
 
+// KEEP EXISTING validateRequest FUNCTION UNCHANGED
 async function validateRequest(req: Request): Promise<WebhookEvent | null> {
   const payloadString = await req.text();
   const svixHeaders = {
@@ -73,6 +102,6 @@ async function validateRequest(req: Request): Promise<WebhookEvent | null> {
     console.error(`Error verifying webhook event`, error);
     return null;
   }
-};
+}
 
 export default http;
