@@ -1,12 +1,10 @@
-// packages/backend/convex/http.ts
-// Final fix using proper Convex pattern
-
 import { Webhook } from "svix";
 import { createClerkClient } from "@clerk/backend";
 import type { WebhookEvent } from "@clerk/backend";
 import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import { internal } from "./_generated/api";
+import { resend } from "./emails";
 
 const clerkClient = createClerkClient({
   secretKey: process.env.CLERK_SECRET_KEY || "",
@@ -14,6 +12,7 @@ const clerkClient = createClerkClient({
 
 const http = httpRouter();
 
+// Clerk webhook handler
 http.route({
   path: "/clerk-webhook",
   method: "POST",
@@ -25,7 +24,6 @@ http.route({
     }
 
     switch (event.type) {
-      // EXISTING SUBSCRIPTION CASE - KEEP UNCHANGED
       case "subscription.updated": {
         const subscription = event.data as {
           status: string;
@@ -54,26 +52,23 @@ http.route({
         break;
       }
 
-      // NEW: Welcome email trigger
       case "user.created": {
         const user = event.data;
-        
+
         try {
-          // Import the email action dynamically to avoid type issues
-          const { sendWelcomeEmail } = await import("./emails");
-          
-          await sendWelcomeEmail(ctx, {
+          // Use scheduler to invoke the internal action
+          await ctx.scheduler.runAfter(0, internal.emails.sendWelcomeEmail, {
             userEmail: user.email_addresses[0]?.email_address || "",
             userName: user.first_name || user.email_addresses[0]?.email_address || "there",
             userId: user.id,
           });
 
-          console.log(`Welcome email triggered for user: ${user.id}`);
+          console.log(`Welcome email scheduled for user: ${user.id}`);
         } catch (emailError) {
-          console.error("Failed to send welcome email:", emailError);
-          // Don't fail the webhook if email fails
+          console.error("Failed to schedule welcome email:", emailError);
+          // Don't fail the webhook if email scheduling fails
         }
-        
+
         break;
       }
 
@@ -85,7 +80,15 @@ http.route({
   }),
 });
 
-// KEEP EXISTING validateRequest FUNCTION UNCHANGED
+// Resend webhook handler for email status updates
+http.route({
+  path: "/resend-webhook",
+  method: "POST",
+  handler: httpAction(async (ctx, req) => {
+    return await resend.handleResendEventWebhook(ctx, req);
+  }),
+});
+
 async function validateRequest(req: Request): Promise<WebhookEvent | null> {
   const payloadString = await req.text();
   const svixHeaders = {
