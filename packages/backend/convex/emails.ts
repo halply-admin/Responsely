@@ -66,7 +66,7 @@ export const getEmailSettings = internalQuery({
 // Webhook / event handler
 // -----------------------------
 
-// Use the helper vOnEmailEventArgs from @convex-dev/resend so the arg types line up
+// FIXED: Use the correct import name
 export const handleEmailEvent = internalMutation({
   args: vOnEmailEventArgs,
   handler: async (ctx, args) => {
