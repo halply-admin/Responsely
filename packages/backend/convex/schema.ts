@@ -4,6 +4,37 @@ import { defineSchema, defineTable } from "convex/server";
 import { v } from "convex/values";
 
 export default defineSchema({
+
+  // Email logging for reporting and analytics
+  emailLogs: defineTable({
+    emailId: v.string(), // Resend email ID
+    userId: v.optional(v.string()),
+    organizationId: v.optional(v.string()),
+    emailType: v.string(), // "welcome", "escalation", "summary"
+    event: v.string(), // "sent", "delivered", "bounced", "failed", "opened", "clicked"
+    timestamp: v.number(),
+    metadata: v.optional(v.any()), // Store email details, conversation ID, etc.
+    errorMessage: v.optional(v.string()),
+  })
+    .index("by_user", ["userId"])
+    .index("by_organization", ["organizationId"])
+    .index("by_timestamp", ["timestamp"])
+    .index("by_email_type", ["emailType"])
+    .index("by_event", ["event"]),
+
+  // Email settings per organization
+  emailSettings: defineTable({
+    organizationId: v.string(),
+    fromEmail: v.string(),
+    fromName: v.string(),
+    replyToEmail: v.optional(v.string()),
+    enableWelcomeEmails: v.boolean(),
+    enableEscalationEmails: v.boolean(),
+    enableSummaryEmails: v.boolean(),
+    summaryFrequency: v.optional(v.string()), // "daily", "weekly"
+    escalationNotifyEmails: v.array(v.string()), // Support team emails
+  }).index("by_organization", ["organizationId"]),
+  
   subscriptions: defineTable({
     organizationId: v.string(),
     status: v.string(),

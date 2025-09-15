@@ -3,6 +3,7 @@
 import { Button } from "@workspace/ui/components/button";
 import { Badge } from "@workspace/ui/components/badge";
 import Link from "next/link";
+import Script from 'next/script';
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Phone, Users, BookOpen, Camera, Zap, Check, Menu, X, Star, LucideIcon } from "lucide-react";
 import { useState } from "react";
@@ -176,6 +177,13 @@ export function LandingPage() {
     <div className="min-h-screen bg-white" style={{ scrollBehavior: 'smooth' }}>
       {/* Header - Clean & Minimal */}
       <header className="bg-white border-b border-gray-100">
+
+        {/* Responsely widget */}
+        <Script 
+          src="https://responsely-widget.vercel.app/widget.js"
+          data-organization-id="org_32L1uTeAUOuCH8tmVIhJXM8ExVe"
+          strategy="afterInteractive"
+        />
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             {/* Logo */}

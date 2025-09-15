@@ -9,6 +9,7 @@
  */
 
 import type * as constants from "../constants.js";
+import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as lib_extractTextContent from "../lib/extractTextContent.js";
 import type * as lib_secrets from "../lib/secrets.js";
@@ -56,6 +57,7 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   constants: typeof constants;
+  emails: typeof emails;
   http: typeof http;
   "lib/extractTextContent": typeof lib_extractTextContent;
   "lib/secrets": typeof lib_secrets;
