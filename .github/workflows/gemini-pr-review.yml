@@ -1,3 +1,4 @@
+# .github/workflows/gemini-pr-review.yml
 name: Gemini AI PR Review
 
 on:
@@ -8,14 +9,20 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
+  checks: write
+  statuses: write
 
 jobs:
   gemini-review:
     runs-on: ubuntu-latest
     name: Gemini AI Code Review
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
     steps:
       - name: Run Gemini PR Review Action
-        uses: consulting-brendan/peer-review@v1.0.0
+        uses: consulting-brendan/peer-review@v1.0.1
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
@@ -59,6 +66,8 @@ jobs:
     permissions:
       contents: read
       security-events: write
+      issues: write
+      pull-requests: write
 
     steps:
       - name: Checkout repository
