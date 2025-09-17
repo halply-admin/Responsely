@@ -1,4 +1,3 @@
-# .github/workflows/gemini-pr-review.yml
 name: Gemini AI PR Review
 
 on:
