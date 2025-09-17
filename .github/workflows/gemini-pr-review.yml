@@ -162,10 +162,15 @@ jobs:
     steps:
       - name: Check Review Status
         run: |
+          echo "Gemini Review Result: ${{ needs.gemini-review.result }}"
+          echo "Security Scan Result: ${{ needs.security-scan.result }}"
+          
           if [[ "${{ needs.gemini-review.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
             echo "✅ AI review and security scan completed successfully"
             echo "This PR is ready for human review"
           else
             echo "❌ AI review or security scan failed"
+            echo "Gemini Review: ${{ needs.gemini-review.result }}"
+            echo "Security Scan: ${{ needs.security-scan.result }}"
             exit 1
           fi
