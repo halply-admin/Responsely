@@ -1,4 +1,3 @@
-# .github/workflows/gemini-pr-review.yml
 name: Gemini AI PR Review
 
 on:
@@ -22,11 +21,10 @@ jobs:
       pull-requests: write
     steps:
       - name: Run Gemini PR Review Action
-        uses: consulting-brendan/peer-review@v1.0.3
+        uses: consulting-brendan/peer-review@v1.0.4
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
-          # Pass the event data to the action
           base-sha: ${{ github.event.pull_request.base.sha }}
           head-sha: ${{ github.event.pull_request.head.sha }}
           pr-title: ${{ github.event.pull_request.title }}
@@ -96,10 +94,8 @@ jobs:
           github-token: ${{ github.token }}
           script: |
             const fs = require('fs');
-            const path = require('path');
-            
             const sarifFile = 'semgrep-results.sarif';
-            
+
             if (!fs.existsSync(sarifFile)) {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
@@ -113,7 +109,7 @@ jobs:
             try {
               const sarifContent = fs.readFileSync(sarifFile, 'utf8');
               const sarifData = JSON.parse(sarifContent);
-              
+
               if (!sarifData.runs?.[0]?.results?.length) {
                 await github.rest.issues.createComment({
                   issue_number: context.issue.number,
@@ -131,14 +127,14 @@ jobs:
                 const file = location?.artifactLocation?.uri || 'Unknown file';
                 const line = location?.region?.startLine || '?';
                 const severity = result.level || 'info';
-                
+
                 const severityEmoji = {
                   'error': '🚨',
                   'warning': '⚠️',
                   'info': 'ℹ️',
                   'note': '📝'
                 }[severity] || '•';
-                
+
                 return `${severityEmoji} **${severity.toUpperCase()}** \`${ruleId}\`: ${message}\n   📁 \`${file}:${line}\``;
               }).join('\n\n');
 
@@ -166,7 +162,6 @@ jobs:
               });
             }
 
-  # Combined status check for branch protection
   ai-review-status:
     runs-on: ubuntu-latest
     needs: [gemini-review, security-scan]
@@ -177,7 +172,7 @@ jobs:
         run: |
           echo "Gemini Review Result: ${{ needs.gemini-review.result }}"
           echo "Security Scan Result: ${{ needs.security-scan.result }}"
-          
+
           if [[ "${{ needs.gemini-review.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
             echo "✅ AI review and security scan completed successfully"
             echo "This PR is ready for human review"
