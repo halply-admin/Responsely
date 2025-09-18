@@ -20,8 +20,13 @@ jobs:
       issues: write
       pull-requests: write
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # required to get full commit history for diffs
+
       - name: Run Gemini PR Review Action
-        uses: consulting-brendan/peer-review@v1.0.4
+        uses: consulting-brendan/peer-review@v1.0.5
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
