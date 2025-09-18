@@ -75,7 +75,7 @@ jobs:
             {{ diff_content }}
             ```
 
-      - name: Post Gemini Review Comment
+      - name: Post Gemini Review
         if: always()
         uses: actions/github-script@v7
         with:
@@ -83,17 +83,19 @@ jobs:
           script: |
             const review = `${{ steps.gemini.outputs.review }}`;
             if (review && review.trim().length > 0) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
+              await github.rest.pulls.createReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
+                pull_number: context.issue.number,
+                event: "COMMENT", // could be "REQUEST_CHANGES" or "APPROVE"
                 body: `## 🤖 Gemini AI Code Review\n\n${review}`
               });
             } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
+              await github.rest.pulls.createReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
+                pull_number: context.issue.number,
+                event: "COMMENT",
                 body: `⚠️ Gemini review ran but produced no output. Please check the workflow logs.`
               });
             }
