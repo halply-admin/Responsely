@@ -22,7 +22,7 @@ jobs:
       pull-requests: write
     steps:
       - name: Run Gemini PR Review Action
-        uses: consulting-brendan/peer-review@v1
+        uses: consulting-brendan/peer-review@v1.0.3
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
