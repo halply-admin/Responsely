@@ -1,225 +1,160 @@
-name: Gemini AI PR Review
+name: "Gemini PR Review Action"
+description: "Generates PR reviews using Gemini API"
+inputs:
+  pr-title:
+    description: "Title of the PR"
+    required: true
+  pr-body:
+    description: "Body of the PR"
+    required: true
+  base-sha:
+    description: "Base commit SHA"
+    required: true
+  head-sha:
+    description: "Head commit SHA"
+    required: true
+  review-prompt:
+    description: "Review prompt template"
+    required: true
+  review-diff-limit:
+    description: "Character limit for the diff"
+    required: false
+    default: "60000"
+  gemini-api-key:
+    description: "Gemini API key"
+    required: true
+outputs:
+  review-output:
+    description: "The generated review content"
+    value: ${{ steps.call-gemini.outputs.review }}
+runs:
+  using: "composite"
+  steps:
+    - name: Debug Inputs
+      shell: bash
+      run: |
+        echo "=== DEBUG: Raw Inputs ==="
+        echo "PR Title: ${{ inputs.pr-title }}"
+        echo "PR Body: ${{ inputs.pr-body }}"
+        echo "Base SHA: ${{ inputs.base-sha }}"
+        echo "Head SHA: ${{ inputs.head-sha }}"
+        echo "Review Prompt: ${{ inputs.review-prompt }}"
+        echo "Diff Limit: ${{ inputs.review-diff-limit }}"
 
-on:
-  pull_request:
-    types: [opened, synchronize, reopened]
+    - name: Get Changed Files and Diff
+      id: get-diff
+      shell: bash
+      env:
+        BASE_SHA: ${{ inputs.base-sha }}
+        HEAD_SHA: ${{ inputs.head-sha }}
+        PR_TITLE: ${{ inputs.pr-title }}
+        PR_BODY: ${{ inputs.pr-body }}
+        REVIEW_PROMPT: ${{ inputs.review-prompt }}
+        REVIEW_DIFF_LIMIT: ${{ inputs.review-diff-limit }}
+      run: |
+        set -euo pipefail
 
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-  checks: write
-  statuses: write
+        echo "=== DEBUG: Checking Git Repository ==="
+        if [ ! -d .git ]; then
+          echo "ERROR: .git directory not found. Did you forget actions/checkout with fetch-depth: 0?"
+          exit 1
+        fi
 
-jobs:
-  gemini-review:
-    runs-on: ubuntu-latest
-    name: Gemini AI Code Review
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
+        echo "=== DEBUG: Git log HEAD ==="
+        git log -1 --oneline || true
 
-      - name: Run Gemini PR Review Action
-        id: gemini
-        uses: consulting-brendan/peer-review@v1.0.5
-        with:
-          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
-          review-diff-limit: '12000'
-          base-sha: ${{ github.event.pull_request.base.sha }}
-          head-sha: ${{ github.event.pull_request.head.sha }}
-          pr-title: ${{ github.event.pull_request.title }}
-          pr-body: ${{ github.event.pull_request.body }}
-          review-prompt: |
-            You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications. 
-            Please review the following pull request changes for the Responsely.ai customer support platform.
+        echo "=== DEBUG: Checking SHAs ==="
+        echo "BASE_SHA=$BASE_SHA"
+        echo "HEAD_SHA=$HEAD_SHA"
 
-            **Focus areas for Responsely codebase:**
-            - TypeScript best practices and type safety
-            - React component patterns, hooks, and performance
-            - Next.js App Router implementation
-            - Convex database queries, mutations, and schema changes
-            - API security and data validation
-            - Customer support platform considerations (real-time features, data handling)
-            - Accessibility for dashboard UI components
-            - Performance implications for customer-facing widget
-            - Email system integration (Resend/Convex)
-            - Authentication and authorization (Clerk integration)
+        echo "=== DEBUG: Getting Changed Files ==="
+        if [ -z "$BASE_SHA" ] || [ -z "$HEAD_SHA" ]; then
+          echo "ERROR: Missing base or head SHA"
+          exit 1
+        fi
+        CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tr '\n' ' ')
+        echo "Changed Files: $CHANGED_FILES"
 
-            **Review Structure:**
-            1. **Code Quality Assessment** (1-10): Rate overall quality and explain reasoning
-            2. **Security Analysis**: Identify vulnerabilities, especially API keys, user data, authentication
-            3. **Performance Review**: Impact on customer widget, dashboard, real-time features
-            4. **TypeScript/React Best Practices**: Deviations from modern patterns
-            5. **Responsely-Specific Concerns**: Customer support platform implications
-            6. **Suggestions**: Specific, actionable improvements with code examples
+        echo "=== DEBUG: Getting Diff Content ==="
+        DIFF_CONTENT=$(git diff --unified=3 "$BASE_SHA" "$HEAD_SHA" | head -c "$REVIEW_DIFF_LIMIT")
+        echo "Diff Content (truncated to $REVIEW_DIFF_LIMIT chars):"
+        echo "$DIFF_CONTENT" | head -n 20
+        echo "--- (end of preview) ---"
 
-            **Pull Request Details:**
-            - **Title**: {{ pr_title }}
-            - **Description**: {{ pr_body }}
-            - **Changed Files**: {{ changed_files }}
+        echo "=== DEBUG: Building Final Prompt ==="
+        FULL_PROMPT="$REVIEW_PROMPT"
+        FULL_PROMPT="${FULL_PROMPT//\{\{ pr_title \}\}/$PR_TITLE}"
+        FULL_PROMPT="${FULL_PROMPT//\{\{ pr_body \}\}/$PR_BODY}"
+        FULL_PROMPT="${FULL_PROMPT//\{\{ changed_files \}\}/$CHANGED_FILES}"
+        FULL_PROMPT="${FULL_PROMPT//\{\{ diff_content \}\}/$DIFF_CONTENT}"
 
-            **Code Changes:**
-            ```diff
-            {{ diff_content }}
-            ```
+        echo "=== DEBUG: Final Prompt Preview (first 40 lines) ==="
+        echo "$FULL_PROMPT" | head -n 40
+        echo "--- (end of preview) ---"
 
-      - name: Post Gemini Review Comment
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
-            const reviewFile = '/tmp/review_output.txt';
+        echo "$FULL_PROMPT" > /tmp/final_prompt.txt
+        echo "files_list=${CHANGED_FILES}" >> $GITHUB_OUTPUT
 
-            if (fs.existsSync(reviewFile)) {
-              const body = fs.readFileSync(reviewFile, 'utf8');
-              if (body.trim().length > 0) {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: `## 🤖 Gemini AI Code Review\n\n${body}`
-                });
-              } else {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: `⚠️ Gemini review ran but produced no output. Please check workflow logs.`
-                });
-              }
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `⚠️ Gemini review completed but no output file was found.`
-              });
-            }
+    - name: Call Gemini API
+      id: call-gemini
+      shell: bash
+      env:
+        GEMINI_API_KEY: ${{ inputs.gemini-api-key }}
+      run: |
+        set -euo pipefail
 
-  security-scan:
-    runs-on: ubuntu-latest
-    name: Security Scan
-    permissions:
-      contents: read
-      security-events: write
-      issues: write
-      pull-requests: write
+        echo "=== DEBUG: Checking Prompt File ==="
+        if [ ! -s /tmp/final_prompt.txt ]; then
+          echo "ERROR: Prompt file is empty or missing"
+          ls -l /tmp
+          exit 1
+        fi
+        wc -c /tmp/final_prompt.txt
 
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
+        echo "=== DEBUG: Sending Request to Gemini API ==="
+        RESPONSE=$(curl -s -w "\n%{http_code}" -X POST \
+          "https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=$GEMINI_API_KEY" \
+          -H "Content-Type: application/json" \
+          -d @<(jq -n --arg prompt "$(cat /tmp/final_prompt.txt)" '{contents:[{parts:[{text:$prompt}]}]}'))
 
-      - name: Run Semgrep Security Analysis
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: |
-            p/ci
-            p/security-audit
-            p/secrets
-            p/typescript
-            p/react
-            p/nextjs
+        BODY=$(echo "$RESPONSE" | head -n -1)
+        STATUS=$(echo "$RESPONSE" | tail -n1)
 
-      - name: Post Security Results
-        uses: actions/github-script@v7
-        if: always()
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            const sarifFile = 'semgrep-results.sarif';
+        echo "=== DEBUG: Gemini API Response Status ==="
+        echo "$STATUS"
+        echo "=== DEBUG: Gemini API Response Body (first 40 lines) ==="
+        echo "$BODY" | head -n 40
+        echo "--- (end of preview) ---"
 
-            if (!fs.existsSync(sarifFile)) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## ✅ Security Analysis Complete\n\nNo security issues detected in this PR.\n\n---\n*Analyzed by Semgrep security scanner*`
-              });
-              return;
-            }
+        if [ "$STATUS" -ne 200 ]; then
+          echo "ERROR: Gemini API call failed with status $STATUS"
+          echo "Response body: $BODY"
+          exit 1
+        fi
 
-            try {
-              const sarifContent = fs.readFileSync(sarifFile, 'utf8');
-              const sarifData = JSON.parse(sarifContent);
+        # Extract review content from Gemini response
+        REVIEW=$(echo "$BODY" | jq -r '.candidates[0].content.parts[0].text // empty')
+        
+        if [ -z "$REVIEW" ] || [ "$REVIEW" = "null" ]; then
+          echo "ERROR: No review content received from Gemini API"
+          echo "Full response: $BODY"
+          exit 1
+        fi
 
-              if (!sarifData.runs?.[0]?.results?.length) {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: `## ✅ Security Analysis Complete\n\nNo security issues detected in this PR.\n\n---\n*Analyzed by Semgrep security scanner*`
-                });
-                return;
-              }
+        # Write review to file for the main workflow to pick up
+        echo "$REVIEW" > /tmp/review_output.txt
+        
+        # Also set as step output
+        {
+          echo "review<<EOF"
+          echo "$REVIEW"
+          echo "EOF"
+        } >> $GITHUB_OUTPUT
 
-              const findings = sarifData.runs[0].results.map(result => {
-                const ruleId = result.ruleId || 'Unknown Rule';
-                const message = result.message?.text || 'No message';
-                const location = result.locations?.[0]?.physicalLocation;
-                const file = location?.artifactLocation?.uri || 'Unknown file';
-                const line = location?.region?.startLine || '?';
-                const severity = result.level || 'info';
-
-                const severityEmoji = {
-                  'error': '🚨',
-                  'warning': '⚠️',
-                  'info': 'ℹ️',
-                  'note': '📝'
-                }[severity] || '•';
-
-                return `${severityEmoji} **${severity.toUpperCase()}** \`${ruleId}\`: ${message}\n   📁 \`${file}:${line}\``;
-              }).join('\n\n');
-
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 🔍 Security Analysis Results\n\n${findings}\n\n---\n*Please review these findings carefully. Consider if any pose security risks to Responsely's customer data or platform.*\n\n*Analyzed by Semgrep security scanner*`
-              });
-
-              await github.rest.issues.addLabels({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: ['security-review-needed']
-              });
-
-            } catch (error) {
-              console.error('Error processing security results:', error);
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## ⚠️ Security Analysis Error\n\nThere was an error processing security scan results. Please check the workflow logs.\n\n---\n*Error: ${error.message}*`
-              });
-            }
-
-  ai-review-status:
-    runs-on: ubuntu-latest
-    needs: [gemini-review, security-scan]
-    name: AI Review Complete
-    if: always()
-    steps:
-      - name: Check Review Status
-        run: |
-          echo "Gemini Review Result: ${{ needs.gemini-review.result }}"
-          echo "Security Scan Result: ${{ needs.security-scan.result }}"
-
-          if [[ "${{ needs.gemini-review.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
-            echo "✅ AI review and security scan completed successfully"
-            echo "This PR is ready for human review"
-          else
-            echo "❌ AI review or security scan failed"
-            echo "Gemini Review: ${{ needs.gemini-review.result }}"
-            echo "Security Scan: ${{ needs.security-scan.result }}"
-            exit 1
-          fi
+        echo "=== DEBUG: Review Output Preview (first 40 lines) ==="
+        echo "$REVIEW" | head -n 40
+        echo "--- (end of preview) ---"
+        
+        echo "=== DEBUG: Verifying output file ==="
+        ls -la /tmp/review_output.txt
+        wc -l /tmp/review_output.txt
