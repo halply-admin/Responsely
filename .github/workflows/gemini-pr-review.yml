@@ -23,9 +23,10 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          fetch-depth: 0 # required to get full commit history for diffs
+          fetch-depth: 0
 
       - name: Run Gemini PR Review Action
+        id: gemini
         uses: consulting-brendan/peer-review@v1.0.5
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
@@ -67,6 +68,41 @@ jobs:
             ```diff
             {{ diff_content }}
             ```
+
+      - name: Post Gemini Review Comment
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const reviewFile = '/tmp/review_output.txt';
+
+            if (fs.existsSync(reviewFile)) {
+              const body = fs.readFileSync(reviewFile, 'utf8');
+              if (body.trim().length > 0) {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `## 🤖 Gemini AI Code Review\n\n${body}`
+                });
+              } else {
+                await github.rest.issues.createComment({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  body: `⚠️ Gemini review ran but produced no output. Please check workflow logs.`
+                });
+              }
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: `⚠️ Gemini review completed but no output file was found.`
+              });
+            }
 
   security-scan:
     runs-on: ubuntu-latest
