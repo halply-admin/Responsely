@@ -20,12 +20,14 @@ jobs:
       - name: Run Gemini CLI for PR review
         uses: google-github-actions/run-gemini-cli@v0
         with:
-          args: |
-            review-pr \
-              --github-token ${{ secrets.GITHUB_TOKEN }} \
-              --repo ${{ github.repository }} \
-              --pr-number ${{ github.event.pull_request.number }} \
-              --model "gemini-1.5-pro-latest" \
-              --comment
-        env:
-          GOOGLE_APPLICATION_CREDENTIALS: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
+          gemini_model: gemini-1.5-pro-latest
+          prompt: |
+            Review this pull request in the repo **${{ github.repository }}**.
+            Provide constructive feedback on:
+            - Code quality
+            - Readability
+            - Best practices
+            - Potential bugs or issues
+            - Suggestions for improvement
+            Return feedback as a PR **comment** (not approval/rejection).
