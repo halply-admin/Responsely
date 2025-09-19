@@ -1,4 +1,5 @@
-name: Gemini AI PR Review
+# Copy from: https://github.com/google-github-actions/run-gemini-cli/tree/main/examples/workflows
+name: Gemini CLI PR Review
 
 on:
   pull_request:
@@ -10,30 +11,24 @@ permissions:
   issues: write
 
 jobs:
-  gemini-review:
+  review:
     runs-on: ubuntu-latest
-    name: Gemini AI Code Review
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Run Gemini PR Review Action
-        id: gemini
-        uses: consulting-brendan/peer-review@v1.0.7
+      - name: Gemini PR Review
+        uses: google-github-actions/run-gemini-cli@v0.1.0
         with:
-          gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
-          review-diff-limit: '12000'
-          base-sha: ${{ github.event.pull_request.base.sha }}
-          head-sha: ${{ github.event.pull_request.head.sha }}
-          pr-title: ${{ github.event.pull_request.title }}
-          pr-body: ${{ github.event.pull_request.body }}
-          review-prompt: |
+          google_api_key: ${{ secrets.GEMINI_API_KEY }}
+          prompt: |
             You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications.
-            Please review the following pull request changes for the Responsely.ai customer support platform.
-
-            **Focus areas for Responsely codebase:**
+            
+            Please review this pull request for the Responsely.ai customer support platform:
+            
+            **Focus areas:**
             - TypeScript best practices and type safety
             - React component patterns, hooks, and performance
             - Next.js App Router implementation
@@ -41,7 +36,7 @@ jobs:
             - API security and data validation
             - Accessibility and performance implications
             - Authentication and authorization (Clerk integration)
-
+            
             **Review Structure:**
             1. Code Quality Assessment
             2. Security Analysis
@@ -49,37 +44,5 @@ jobs:
             4. TypeScript/React Best Practices
             5. Responsely-Specific Concerns
             6. Suggestions
-
-            **Pull Request Details:**
-            - Title: {{ pr_title }}
-            - Description: {{ pr_body }}
-            - Changed Files: {{ changed_files }}
-
-            **Code Changes:**
-            ```diff
-            {{ diff_content }}
-            ```
-
-      - name: Post Gemini Review as PR Comment
-        if: always()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const review = `${{ steps.gemini.outputs.review }}`
-
-            if (!review || review.trim().length === 0) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: "⚠️ Gemini action ran but did not produce any review output. Please check workflow logs."
-              })
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 🤖 Gemini AI Code Review\n\n${review}`
-              })
-            }
+            
+            Please provide a comprehensive review of all changes, including new files, modified files, and deleted files.
