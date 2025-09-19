@@ -1,27 +1,36 @@
-name: Gemini AI PR Review
+# .github/workflows/gemini-dispatch.yml
+# This is the main dispatcher workflow that handles Gemini CLI actions
+
+name: Gemini CLI Dispatch
 
 on:
+  issues:
+    types: [opened, edited]
   pull_request:
     types: [opened, synchronize, reopened]
+  issue_comment:
+    types: [created, edited]
 
 permissions:
   contents: read
-  pull-requests: write
   issues: write
+  pull-requests: write
 
 jobs:
-  gemini-review:
+  dispatch:
     runs-on: ubuntu-latest
-    name: Gemini AI Code Review
+    if: |
+      (github.event_name == 'issues' && github.event.action == 'opened') ||
+      (github.event_name == 'pull_request') ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@gemini-cli'))
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
-      - name: Gemini CLI PR Review
-        uses: google-github-actions/run-gemini-cli@main  # Use @main instead of @v0.1.0
+      - name: Gemini CLI
+        uses: google-github-actions/run-gemini-cli@main
         with:
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
           prompt: |
             You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications.
             Please review the following pull request changes for the Responsely.ai customer support platform.
@@ -44,4 +53,3 @@ jobs:
             6. Suggestions
 
             Please provide a thorough review of the code changes in this pull request.
-          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
