@@ -25,15 +25,9 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Fetch PR SHAs
-        run: |
-          echo "Fetching PR SHAs to ensure git diff works"
-          git fetch origin ${{ github.event.pull_request.base.sha }} \
-                          ${{ github.event.pull_request.head.sha }} || true
-
       - name: Run Gemini PR Review Action
         id: gemini
-        uses: consulting-brendan/peer-review@v1.0.5
+        uses: consulting-brendan/peer-review@v1.0.6
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
@@ -58,12 +52,12 @@ jobs:
             - Authentication and authorization (Clerk integration)
 
             **Review Structure:**
-            1. **Code Quality Assessment** (1-10): Rate overall quality and explain reasoning
-            2. **Security Analysis**: Identify vulnerabilities, especially API keys, user data, authentication
-            3. **Performance Review**: Impact on customer widget, dashboard, real-time features
-            4. **TypeScript/React Best Practices**: Deviations from modern patterns
-            5. **Responsely-Specific Concerns**: Customer support platform implications
-            6. **Suggestions**: Specific, actionable improvements with code examples
+            1. **Code Quality Assessment** (1-10)
+            2. **Security Analysis**
+            3. **Performance Review**
+            4. **TypeScript/React Best Practices**
+            5. **Responsely-Specific Concerns**
+            6. **Suggestions**
 
             **Pull Request Details:**
             - **Title**: {{ pr_title }}
@@ -87,15 +81,14 @@ jobs:
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
-                event: "COMMENT", // could be "REQUEST_CHANGES" or "APPROVE"
+                event: "COMMENT",
                 body: `## 🤖 Gemini AI Code Review\n\n${review}`
               });
             } else {
-              await github.rest.pulls.createReview({
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: context.issue.number,
-                event: "COMMENT",
                 body: `⚠️ Gemini review ran but produced no output. Please check the workflow logs.`
               });
             }
@@ -163,14 +156,7 @@ jobs:
                 const file = location?.artifactLocation?.uri || 'Unknown file';
                 const line = location?.region?.startLine || '?';
                 const severity = result.level || 'info';
-
-                const severityEmoji = {
-                  'error': '🚨',
-                  'warning': '⚠️',
-                  'info': 'ℹ️',
-                  'note': '📝'
-                }[severity] || '•';
-
+                const severityEmoji = { error: '🚨', warning: '⚠️', info: 'ℹ️', note: '📝' }[severity] || '•';
                 return `${severityEmoji} **${severity.toUpperCase()}** \`${ruleId}\`: ${message}\n   📁 \`${file}:${line}\``;
               }).join('\n\n');
 
@@ -178,7 +164,7 @@ jobs:
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `## 🔍 Security Analysis Results\n\n${findings}\n\n---\n*Please review these findings carefully. Consider if any pose security risks to Responsely's customer data or platform.*\n\n*Analyzed by Semgrep security scanner*`
+                body: `## 🔍 Security Analysis Results\n\n${findings}\n\n---\n*Analyzed by Semgrep security scanner*`
               });
 
               await github.rest.issues.addLabels({
@@ -188,32 +174,26 @@ jobs:
                 labels: ['security-review-needed']
               });
             } catch (error) {
-              console.error('Error processing security results:', error);
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `## ⚠️ Security Analysis Error\n\nThere was an error processing security scan results. Please check the workflow logs.\n\n---\n*Error: ${error.message}*`
+                body: `## ⚠️ Security Analysis Error\n\nError processing results.\n\n---\n*Error: ${error.message}*`
               });
             }
 
   ai-review-status:
     runs-on: ubuntu-latest
     needs: [gemini-review, security-scan]
-    name: AI Review Complete
     if: always()
     steps:
       - name: Check Review Status
         run: |
           echo "Gemini Review Result: ${{ needs.gemini-review.result }}"
           echo "Security Scan Result: ${{ needs.security-scan.result }}"
-
           if [[ "${{ needs.gemini-review.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
             echo "✅ AI review and security scan completed successfully"
-            echo "This PR is ready for human review"
           else
             echo "❌ AI review or security scan failed"
-            echo "Gemini Review: ${{ needs.gemini-review.result }}"
-            echo "Security Scan: ${{ needs.security-scan.result }}"
             exit 1
           fi
