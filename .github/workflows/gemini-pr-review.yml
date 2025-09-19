@@ -1,5 +1,4 @@
-# Copy from: https://github.com/google-github-actions/run-gemini-cli/tree/main/examples/workflows
-name: Gemini CLI PR Review
+name: Gemini AI PR Review
 
 on:
   pull_request:
@@ -11,24 +10,23 @@ permissions:
   issues: write
 
 jobs:
-  review:
+  gemini-review:
     runs-on: ubuntu-latest
+    name: Gemini AI Code Review
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
-      - name: Gemini PR Review
-        uses: google-github-actions/run-gemini-cli@v0.1.0
+      - name: Gemini CLI PR Review
+        uses: google-github-actions/run-gemini-cli@main  # Use @main instead of @v0.1.0
         with:
-          google_api_key: ${{ secrets.GEMINI_API_KEY }}
           prompt: |
             You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications.
-            
-            Please review this pull request for the Responsely.ai customer support platform:
-            
-            **Focus areas:**
+            Please review the following pull request changes for the Responsely.ai customer support platform.
+
+            **Focus areas for Responsely codebase:**
             - TypeScript best practices and type safety
             - React component patterns, hooks, and performance
             - Next.js App Router implementation
@@ -36,7 +34,7 @@ jobs:
             - API security and data validation
             - Accessibility and performance implications
             - Authentication and authorization (Clerk integration)
-            
+
             **Review Structure:**
             1. Code Quality Assessment
             2. Security Analysis
@@ -44,5 +42,6 @@ jobs:
             4. TypeScript/React Best Practices
             5. Responsely-Specific Concerns
             6. Suggestions
-            
-            Please provide a comprehensive review of all changes, including new files, modified files, and deleted files.
+
+            Please provide a thorough review of the code changes in this pull request.
+          gemini_api_key: ${{ secrets.GEMINI_API_KEY }}
