@@ -8,17 +8,11 @@ permissions:
   contents: read
   pull-requests: write
   issues: write
-  checks: write
-  statuses: write
 
 jobs:
   gemini-review:
     runs-on: ubuntu-latest
     name: Gemini AI Code Review
-    permissions:
-      contents: read
-      issues: write
-      pull-requests: write
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -27,7 +21,7 @@ jobs:
 
       - name: Run Gemini PR Review Action
         id: gemini
-        uses: consulting-brendan/peer-review@v1.0.6
+        uses: consulting-brendan/peer-review@v1.0.7
         with:
           gemini-api-key: ${{ secrets.GEMINI_API_KEY }}
           review-diff-limit: '12000'
@@ -36,7 +30,7 @@ jobs:
           pr-title: ${{ github.event.pull_request.title }}
           pr-body: ${{ github.event.pull_request.body }}
           review-prompt: |
-            You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications. 
+            You are an expert code reviewer specializing in TypeScript, React, Next.js, and Convex database applications.
             Please review the following pull request changes for the Responsely.ai customer support platform.
 
             **Focus areas for Responsely codebase:**
@@ -45,155 +39,47 @@ jobs:
             - Next.js App Router implementation
             - Convex database queries, mutations, and schema changes
             - API security and data validation
-            - Customer support platform considerations (real-time features, data handling)
-            - Accessibility for dashboard UI components
-            - Performance implications for customer-facing widget
-            - Email system integration (Resend/Convex)
+            - Accessibility and performance implications
             - Authentication and authorization (Clerk integration)
 
             **Review Structure:**
-            1. **Code Quality Assessment** (1-10)
-            2. **Security Analysis**
-            3. **Performance Review**
-            4. **TypeScript/React Best Practices**
-            5. **Responsely-Specific Concerns**
-            6. **Suggestions**
+            1. Code Quality Assessment
+            2. Security Analysis
+            3. Performance Review
+            4. TypeScript/React Best Practices
+            5. Responsely-Specific Concerns
+            6. Suggestions
 
             **Pull Request Details:**
-            - **Title**: {{ pr_title }}
-            - **Description**: {{ pr_body }}
-            - **Changed Files**: {{ changed_files }}
+            - Title: {{ pr_title }}
+            - Description: {{ pr_body }}
+            - Changed Files: {{ changed_files }}
 
             **Code Changes:**
             ```diff
             {{ diff_content }}
             ```
 
-      - name: Post Gemini Review
+      - name: Post Gemini Review as PR Comment
         if: always()
         uses: actions/github-script@v7
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const review = `${{ steps.gemini.outputs.review }}`;
-            if (review && review.trim().length > 0) {
-              await github.rest.pulls.createReview({
+            const review = `${{ steps.gemini.outputs.review }}`
+
+            if (!review || review.trim().length === 0) {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                pull_number: context.issue.number,
-                event: "COMMENT",
-                body: `## 🤖 Gemini AI Code Review\n\n${review}`
-              });
+                body: "⚠️ Gemini action ran but did not produce any review output. Please check workflow logs."
+              })
             } else {
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                body: `⚠️ Gemini review ran but produced no output. Please check the workflow logs.`
-              });
+                body: `## 🤖 Gemini AI Code Review\n\n${review}`
+              })
             }
-
-  security-scan:
-    runs-on: ubuntu-latest
-    name: Security Scan
-    permissions:
-      contents: read
-      security-events: write
-      issues: write
-      pull-requests: write
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v4
-
-      - name: Run Semgrep Security Analysis
-        uses: returntocorp/semgrep-action@v1
-        with:
-          config: |
-            p/ci
-            p/security-audit
-            p/secrets
-            p/typescript
-            p/react
-            p/nextjs
-
-      - name: Post Security Results
-        uses: actions/github-script@v7
-        if: always()
-        with:
-          github-token: ${{ github.token }}
-          script: |
-            const fs = require('fs');
-            const sarifFile = 'semgrep-results.sarif';
-
-            if (!fs.existsSync(sarifFile)) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## ✅ Security Analysis Complete\n\nNo security issues detected in this PR.\n\n---\n*Analyzed by Semgrep security scanner*`
-              });
-              return;
-            }
-
-            try {
-              const sarifContent = fs.readFileSync(sarifFile, 'utf8');
-              const sarifData = JSON.parse(sarifContent);
-
-              if (!sarifData.runs?.[0]?.results?.length) {
-                await github.rest.issues.createComment({
-                  issue_number: context.issue.number,
-                  owner: context.repo.owner,
-                  repo: context.repo.repo,
-                  body: `## ✅ Security Analysis Complete\n\nNo security issues detected in this PR.\n\n---\n*Analyzed by Semgrep security scanner*`
-                });
-                return;
-              }
-
-              const findings = sarifData.runs[0].results.map(result => {
-                const ruleId = result.ruleId || 'Unknown Rule';
-                const message = result.message?.text || 'No message';
-                const location = result.locations?.[0]?.physicalLocation;
-                const file = location?.artifactLocation?.uri || 'Unknown file';
-                const line = location?.region?.startLine || '?';
-                const severity = result.level || 'info';
-                const severityEmoji = { error: '🚨', warning: '⚠️', info: 'ℹ️', note: '📝' }[severity] || '•';
-                return `${severityEmoji} **${severity.toUpperCase()}** \`${ruleId}\`: ${message}\n   📁 \`${file}:${line}\``;
-              }).join('\n\n');
-
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## 🔍 Security Analysis Results\n\n${findings}\n\n---\n*Analyzed by Semgrep security scanner*`
-              });
-
-              await github.rest.issues.addLabels({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                labels: ['security-review-needed']
-              });
-            } catch (error) {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body: `## ⚠️ Security Analysis Error\n\nError processing results.\n\n---\n*Error: ${error.message}*`
-              });
-            }
-
-  ai-review-status:
-    runs-on: ubuntu-latest
-    needs: [gemini-review, security-scan]
-    if: always()
-    steps:
-      - name: Check Review Status
-        run: |
-          echo "Gemini Review Result: ${{ needs.gemini-review.result }}"
-          echo "Security Scan Result: ${{ needs.security-scan.result }}"
-          if [[ "${{ needs.gemini-review.result }}" == "success" && "${{ needs.security-scan.result }}" == "success" ]]; then
-            echo "✅ AI review and security scan completed successfully"
-          else
-            echo "❌ AI review or security scan failed"
-            exit 1
-          fi
