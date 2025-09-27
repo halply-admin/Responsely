@@ -94,8 +94,7 @@ export default defineSchema({
     .index("by_organization_id", ["organizationId"])
     .index("by_contact_session_id", ["contactSessionId"])
     .index("by_thread_id", ["threadId"])
-    .index("by_status_and_organization_id", ["status", "organizationId"])
-    .index("by_org_and_time", ["organizationId", "_creationTime"]),
+    .index("by_status_and_organization_id", ["status", "organizationId"]),
 
   contactSessions: defineTable({
     name: v.string(),

@@ -52,27 +52,23 @@ export const getOverviewMetrics = query({
     const previousStartTimestamp = startTimestamp - periodDuration;
     const previousEndTimestamp = startTimestamp;
 
-    // Get conversations for current period using efficient database index
-    const currentConversations = await ctx.db
+    // Get conversations for current period using organization index
+    // NOTE: This fetches all conversations for the org and filters client-side.
+    // For organizations with >10k conversations, consider adding a compound index
+    // like ["organizationId", "status"] if performance becomes an issue.
+    const allConversations = await ctx.db
       .query("conversations")
-      .withIndex("by_org_and_time", (q) =>
-        q
-          .eq("organizationId", orgId)
-          .gte("_creationTime", startTimestamp)
-          .lte("_creationTime", endTimestamp)
-      )
+      .withIndex("by_organization_id", (q) => q.eq("organizationId", orgId))
       .collect();
+    
+    const currentConversations = allConversations.filter(
+      (conv) => conv._creationTime >= startTimestamp && conv._creationTime <= endTimestamp
+    );
 
-    // Get conversations for previous period using efficient database index  
-    const previousConversations = await ctx.db
-      .query("conversations")
-      .withIndex("by_org_and_time", (q) =>
-        q
-          .eq("organizationId", orgId)
-          .gte("_creationTime", previousStartTimestamp)
-          .lt("_creationTime", previousEndTimestamp)
-      )
-      .collect();
+    // Get conversations for previous period using organization index  
+    const previousConversations = allConversations.filter(
+      (conv) => conv._creationTime >= previousStartTimestamp && conv._creationTime < previousEndTimestamp
+    );
 
     // Calculate total conversations
     const totalConversationsCurrent = currentConversations.length;
@@ -209,16 +205,15 @@ export const getStatusDistribution = query({
     const startTimestamp = toTimestamp(args.startDate);
     const endTimestamp = toTimestamp(args.endDate);
 
-    // Get conversations for the period using efficient database index
-    const conversations = await ctx.db
+    // Get conversations for the period using organization index
+    const allConversations = await ctx.db
       .query("conversations")
-      .withIndex("by_org_and_time", (q) =>
-        q
-          .eq("organizationId", orgId)
-          .gte("_creationTime", startTimestamp)
-          .lte("_creationTime", endTimestamp)
-      )
+      .withIndex("by_organization_id", (q) => q.eq("organizationId", orgId))
       .collect();
+    
+    const conversations = allConversations.filter(
+      (conv) => conv._creationTime >= startTimestamp && conv._creationTime <= endTimestamp
+    );
 
     // Handle empty data gracefully
     if (conversations.length === 0) {
@@ -282,16 +277,15 @@ export const getAIHumanComparison = query({
     const startTimestamp = toTimestamp(args.startDate);
     const endTimestamp = toTimestamp(args.endDate);
 
-    // Get conversations for the period using efficient database index
-    const conversations = await ctx.db
+    // Get conversations for the period using organization index
+    const allConversations = await ctx.db
       .query("conversations")
-      .withIndex("by_org_and_time", (q) =>
-        q
-          .eq("organizationId", orgId)
-          .gte("_creationTime", startTimestamp)
-          .lte("_creationTime", endTimestamp)
-      )
+      .withIndex("by_organization_id", (q) => q.eq("organizationId", orgId))
       .collect();
+    
+    const conversations = allConversations.filter(
+      (conv) => conv._creationTime >= startTimestamp && conv._creationTime <= endTimestamp
+    );
 
     const totalConversations = conversations.length;
     const resolvedConversations = conversations.filter(conv => conv.status === 'resolved').length;
@@ -389,16 +383,15 @@ export const getResponseTimeTrends = query({
     const startTimestamp = toTimestamp(args.startDate);
     const endTimestamp = toTimestamp(args.endDate);
 
-    // Get conversations for the period using efficient database index
-    const conversations = await ctx.db
+    // Get conversations for the period using organization index
+    const allConversations = await ctx.db
       .query("conversations")
-      .withIndex("by_org_and_time", (q) =>
-        q
-          .eq("organizationId", orgId)
-          .gte("_creationTime", startTimestamp)
-          .lte("_creationTime", endTimestamp)
-      )
+      .withIndex("by_organization_id", (q) => q.eq("organizationId", orgId))
       .collect();
+    
+    const conversations = allConversations.filter(
+      (conv) => conv._creationTime >= startTimestamp && conv._creationTime <= endTimestamp
+    );
 
     // Handle empty data gracefully
     if (conversations.length === 0) {
