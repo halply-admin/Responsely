@@ -14,13 +14,12 @@ export const formatEmailAddress = (email: string, name?: string): string => {
 export const getEmailConfig = (
   customConfig?: Partial<EmailConfig>
 ): EmailConfig => {
-  const config = { ...DEFAULT_EMAIL_CONFIG, ...customConfig };
-  
-  // ✅ FIX: Ensure required fields are never undefined
-  config.fromEmail = customConfig?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail;
-  config.fromName = customConfig?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName;
-  
-  return config;
+  return {
+    ...DEFAULT_EMAIL_CONFIG,
+    ...customConfig,
+    fromName: customConfig?.fromName || DEFAULT_EMAIL_CONFIG.fromName,
+    fromEmail: customConfig?.fromEmail || DEFAULT_EMAIL_CONFIG.fromEmail,
+  };
 };
 
 /**
