@@ -46,71 +46,73 @@ export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps)
       error={error}
       height="h-[400px]"
     >
-      {/* Performance Summary */}
-      {data && (
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <div className="text-center p-4 bg-blue-50 rounded-lg">
-            <div className="text-2xl font-bold text-blue-600">{data.ai.totalResolved}</div>
-            <div className="text-sm text-blue-600">AI Resolutions</div>
-            <div className="text-xs text-muted-foreground">{data.ai.resolutionRate}% success rate</div>
+      <div className="space-y-6">
+        {/* Performance Summary */}
+        {data && (
+          <div className="grid grid-cols-2 gap-4">
+            <div className="text-center p-4 bg-blue-50 rounded-lg">
+              <div className="text-2xl font-bold text-blue-600">{data.ai.totalResolved}</div>
+              <div className="text-sm text-blue-600">AI Resolutions</div>
+              <div className="text-xs text-muted-foreground">{data.ai.resolutionRate}% success rate</div>
+            </div>
+            <div className="text-center p-4 bg-green-50 rounded-lg">
+              <div className="text-2xl font-bold text-green-600">{data.human.totalResolved}</div>
+              <div className="text-sm text-green-600">Human Resolutions</div>
+              <div className="text-xs text-muted-foreground">{data.human.resolutionRate}% success rate</div>
+            </div>
           </div>
-          <div className="text-center p-4 bg-green-50 rounded-lg">
-            <div className="text-2xl font-bold text-green-600">{data.human.totalResolved}</div>
-            <div className="text-sm text-green-600">Human Resolutions</div>
-            <div className="text-xs text-muted-foreground">{data.human.resolutionRate}% success rate</div>
-          </div>
-        </div>
-      )}
+        )}
 
-      <ChartContainer
-        config={chartConfig}
-        className="h-[300px]"
-      >
-        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <XAxis 
-            dataKey="metric" 
-            tick={{ fontSize: 11 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis 
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <ChartTooltip content={<ChartTooltipContent />} />
-          <Legend />
-          <Bar 
-            dataKey="ai" 
-            fill={chartConfig.ai.color}
-            name={chartConfig.ai.label}
-            radius={[2, 2, 0, 0]}
-          />
-          <Bar 
-            dataKey="human" 
-            fill={chartConfig.human.color}
-            name={chartConfig.human.label}
-            radius={[2, 2, 0, 0]}
-          />
-        </BarChart>
-      </ChartContainer>
+        <ChartContainer
+          config={chartConfig}
+          className="h-[300px]"
+        >
+          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis 
+              dataKey="metric" 
+              tick={{ fontSize: 11 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis 
+              tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <Legend />
+            <Bar 
+              dataKey="ai" 
+              fill={chartConfig.ai.color}
+              name={chartConfig.ai.label}
+              radius={[2, 2, 0, 0]}
+            />
+            <Bar 
+              dataKey="human" 
+              fill={chartConfig.human.color}
+              name={chartConfig.human.label}
+              radius={[2, 2, 0, 0]}
+            />
+          </BarChart>
+        </ChartContainer>
 
-      {/* Key Insights */}
-      {data && (
-        <div className="mt-4">
-          <h4 className="text-sm font-medium mb-2">Key Insights</h4>
-          <div className="grid gap-2">
-            {data.comparison.map((item) => (
-              <div key={item.metric} className="flex items-center justify-between text-sm">
-                <span className="text-muted-foreground">{item.metric}</span>
-                <Badge variant={item.better === 'ai' ? 'default' : 'secondary'}>
-                  {item.better === 'ai' ? 'AI Better' : 'Human Better'} ({Math.abs(item.difference)}%)
-                </Badge>
-              </div>
-            ))}
+        {/* Key Insights */}
+        {data && (
+          <div>
+            <h4 className="text-sm font-medium mb-2">Key Insights</h4>
+            <div className="grid gap-2">
+              {data.comparison.map((item) => (
+                <div key={item.metric} className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">{item.metric}</span>
+                  <Badge variant={item.better === 'ai' ? 'default' : 'secondary'}>
+                    {item.better === 'ai' ? 'AI Better' : 'Human Better'} ({Math.abs(item.difference)}%)
+                  </Badge>
+                </div>
+              ))}
+            </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </ChartCard>
   );
 }; 

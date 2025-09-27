@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { subDays } from "date-fns";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { Button } from "@workspace/ui/components/button";
 import { Download, RefreshCw, TrendingUp, Zap, AlertTriangle, BarChart3Icon } from "lucide-react";
@@ -23,8 +24,8 @@ import { useSubscriptionStatus } from "@/modules/billing/hooks/use-subscription-
 export const ReportsView = () => {
   const [filters, setFilters] = useState<ReportFilters>({
     dateRange: {
-      start: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-      end: new Date().toISOString()
+      start: subDays(new Date(), 30).toISOString(),
+      end: new Date().toISOString(),
     },
     status: 'all',
     subscriptionStatus: 'all'

@@ -18,40 +18,6 @@ export const ChartCard = ({
   height = "h-[300px]", 
   children 
 }: ChartCardProps) => {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className={`${height} flex items-center justify-center`}>
-            <div className="animate-pulse">Loading chart...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>{title}</CardTitle>
-          <CardDescription>{description}</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className={`${height} flex items-center justify-center`}>
-            <div className="text-muted-foreground">
-              Failed to load chart data
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
   return (
     <Card>
       <CardHeader>
@@ -59,7 +25,19 @@ export const ChartCard = ({
         <CardDescription>{description}</CardDescription>
       </CardHeader>
       <CardContent>
-        {children}
+        {isLoading ? (
+          <div className={`${height} flex items-center justify-center`}>
+            <div className="animate-pulse">Loading chart...</div>
+          </div>
+        ) : error ? (
+          <div className={`${height} flex items-center justify-center`}>
+            <div className="text-muted-foreground">
+              Failed to load chart data
+            </div>
+          </div>
+        ) : (
+          children
+        )}
       </CardContent>
     </Card>
   );

@@ -2,8 +2,9 @@
 
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { MessageSquare, Clock, CheckCircle, Bot } from "lucide-react";
-import { useEffect, useState } from "react";
-import { ReportFilters, OverviewDashboardReport, OverviewMetrics } from "@/modules/reports/lib/reports";
+import { useQuery } from "convex/react";
+import { api } from "@workspace/backend/_generated/api";
+import { ReportFilters, OverviewMetrics } from "@/modules/reports/lib/reports";
 
 interface OverviewCardsProps {
   filters: ReportFilters;
@@ -54,25 +55,12 @@ const MetricCard = ({ title, icon: Icon, value, change, trend, description, posi
 };
 
 export const OverviewCards = ({ filters }: OverviewCardsProps) => {
-  const [metrics, setMetrics] = useState<OverviewMetrics | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const metrics = useQuery(api.private.reports.getOverviewMetrics, {
+    startDate: filters.dateRange.start,
+    endDate: filters.dateRange.end,
+  });
 
-  useEffect(() => {
-    const fetchMetrics = async () => {
-      setIsLoading(true);
-      try {
-        const report = new OverviewDashboardReport(filters);
-        const data = await report.fetchData();
-        setMetrics(data);
-      } catch (error) {
-        console.error('Failed to fetch overview metrics:', error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchMetrics();
-  }, [filters]);
+  const isLoading = metrics === undefined;
 
   if (isLoading) {
     return (

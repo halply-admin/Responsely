@@ -47,64 +47,66 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
       isLoading={isLoading}
       error={error}
     >
-      {/* Summary Stats */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex items-center gap-4">
-          <div>
-            <div className="text-2xl font-bold">{data?.avgResponseTime}m</div>
-            <div className="text-sm text-muted-foreground">Average Response Time</div>
-          </div>
-          <div className="flex items-center gap-2">
-            {data && data.improvement < 0 ? (
-              <TrendingDown className="h-4 w-4 text-green-600" />
-            ) : (
-              <TrendingUp className="h-4 w-4 text-red-600" />
-            )}
-            <Badge variant={data && data.improvement < 0 ? "default" : "destructive"}>
-              {data && Math.abs(data.improvement)}% {data && data.improvement < 0 ? 'Improvement' : 'Decline'}
-            </Badge>
+      <div className="space-y-4">
+        {/* Summary Stats */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <div>
+              <div className="text-2xl font-bold">{data?.avgResponseTime}m</div>
+              <div className="text-sm text-muted-foreground">Average Response Time</div>
+            </div>
+            <div className="flex items-center gap-2">
+              {data && data.improvement < 0 ? (
+                <TrendingDown className="h-4 w-4 text-green-600" />
+              ) : (
+                <TrendingUp className="h-4 w-4 text-red-600" />
+              )}
+              <Badge variant={data && data.improvement < 0 ? "default" : "destructive"}>
+                {data && Math.abs(data.improvement)}% {data && data.improvement < 0 ? 'Improvement' : 'Decline'}
+              </Badge>
+            </div>
           </div>
         </div>
-      </div>
 
-      <ChartContainer
-        config={chartConfig}
-        className="h-[300px]"
-      >
-        <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-          <XAxis 
-            dataKey="date" 
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
-          />
-          <YAxis 
-            tick={{ fontSize: 12 }}
-            tickLine={false}
-            axisLine={false}
-            label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
-          />
-          
-          {/* Target line at 15 minutes */}
-          <ReferenceLine 
-            y={15} 
-            stroke="#22c55e" 
-            strokeDasharray="5 5"
-            label={{ value: "Target (15m)", position: "right" }}
-          />
-          
-          <ChartTooltip content={<ChartTooltipContent />} />
-          
-          <Line 
-            type="monotone" 
-            dataKey="responseTime" 
-            stroke={chartConfig.responseTime.color}
-            strokeWidth={2}
-            dot={{ fill: chartConfig.responseTime.color, strokeWidth: 2, r: 4 }}
-            activeDot={{ r: 6, stroke: chartConfig.responseTime.color, strokeWidth: 2 }}
-          />
-        </LineChart>
-      </ChartContainer>
+        <ChartContainer
+          config={chartConfig}
+          className="h-[300px]"
+        >
+          <LineChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+            <XAxis 
+              dataKey="date" 
+              tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+            />
+            <YAxis 
+              tick={{ fontSize: 12 }}
+              tickLine={false}
+              axisLine={false}
+              label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
+            />
+            
+            {/* Target line at 15 minutes */}
+            <ReferenceLine 
+              y={15} 
+              stroke="#22c55e" 
+              strokeDasharray="5 5"
+              label={{ value: "Target (15m)", position: "right" }}
+            />
+            
+            <ChartTooltip content={<ChartTooltipContent />} />
+            
+            <Line 
+              type="monotone" 
+              dataKey="responseTime" 
+              stroke={chartConfig.responseTime.color}
+              strokeWidth={2}
+              dot={{ fill: chartConfig.responseTime.color, strokeWidth: 2, r: 4 }}
+              activeDot={{ r: 6, stroke: chartConfig.responseTime.color, strokeWidth: 2 }}
+            />
+          </LineChart>
+        </ChartContainer>
+      </div>
     </ChartCard>
   );
 }; 
