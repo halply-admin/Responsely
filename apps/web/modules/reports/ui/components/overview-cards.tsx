@@ -105,7 +105,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.totalConversations.current, metrics.totalConversations.unit),
       change: metrics.totalConversations.change,
       trend: metrics.totalConversations.trend,
-      positiveTrendDirection: ('positiveTrendDirection' in metrics.totalConversations ? metrics.totalConversations.positiveTrendDirection : 'up') as 'up' | 'down',
+      positiveTrendDirection: metrics.totalConversations.positiveTrendDirection,
       description: "vs last period"
     },
     {
@@ -114,7 +114,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.avgFirstResponseTime.current, metrics.avgFirstResponseTime.unit),
       change: metrics.avgFirstResponseTime.change,
       trend: metrics.avgFirstResponseTime.trend,
-      positiveTrendDirection: ('positiveTrendDirection' in metrics.avgFirstResponseTime ? metrics.avgFirstResponseTime.positiveTrendDirection : 'up') as 'up' | 'down',
+      positiveTrendDirection: metrics.avgFirstResponseTime.positiveTrendDirection,
       description: "first response"
     },
     {
@@ -123,7 +123,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.resolutionRate.current, metrics.resolutionRate.unit),
       change: metrics.resolutionRate.change,
       trend: metrics.resolutionRate.trend,
-      positiveTrendDirection: ('positiveTrendDirection' in metrics.resolutionRate ? metrics.resolutionRate.positiveTrendDirection : 'up') as 'up' | 'down',
+      positiveTrendDirection: metrics.resolutionRate.positiveTrendDirection,
       description: "successfully resolved"
     },
     {
@@ -132,7 +132,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.aiResolutionRate.current, metrics.aiResolutionRate.unit),
       change: metrics.aiResolutionRate.change,
       trend: metrics.aiResolutionRate.trend,
-      positiveTrendDirection: ('positiveTrendDirection' in metrics.aiResolutionRate ? metrics.aiResolutionRate.positiveTrendDirection : 'up') as 'up' | 'down',
+      positiveTrendDirection: metrics.aiResolutionRate.positiveTrendDirection,
       description: "automated resolution"
     }
   ];

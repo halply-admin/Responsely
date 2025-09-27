@@ -35,6 +35,13 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
   const isLoading = data === undefined;
   const error = data === null;
 
+  // Transform data to include colors from chartConfig
+  const chartData = data?.distribution.map((item) => ({
+    ...item,
+    color: chartConfig[item.status as keyof typeof chartConfig]?.color || '#ccc',
+    label: chartConfig[item.status as keyof typeof chartConfig]?.label || item.status,
+  })) || [];
+
   return (
     <ChartCard
       title="Conversation Status"
@@ -49,7 +56,7 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
         >
           <PieChart>
             <Pie
-              data={data?.distribution || []}
+              data={chartData}
               cx="50%"
               cy="50%"
               innerRadius={60}
@@ -57,7 +64,7 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
               paddingAngle={2}
               dataKey="count"
             >
-              {data?.distribution.map((entry, index) => (
+              {chartData.map((entry, index) => (
                 <Cell 
                   key={`cell-${index}`} 
                   fill={entry.color}
@@ -73,7 +80,7 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
                       <div className="grid gap-2">
                         <div className="flex flex-col">
                           <span className="text-[0.70rem] uppercase text-muted-foreground">
-                            {data.status}
+                            {data.label}
                           </span>
                           <span className="font-bold text-muted-foreground">
                             {data.count} ({data.percentage}%)
@@ -92,14 +99,14 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
         {/* Status Summary */}
         {data && (
           <div className="grid grid-cols-3 gap-4">
-            {data.distribution.map((item) => (
+            {chartData.map((item) => (
               <div key={item.status} className="text-center">
                 <div 
                   className="w-3 h-3 rounded-full mx-auto mb-1"
                   style={{ backgroundColor: item.color }}
                 />
                 <div className="text-sm font-medium">{item.count}</div>
-                <div className="text-xs text-muted-foreground">{item.status}</div>
+                <div className="text-xs text-muted-foreground">{item.label}</div>
               </div>
             ))}
           </div>

@@ -13,6 +13,8 @@ interface ResponseTimeTrendsChartProps {
   filters: ReportFilters;
 }
 
+const RESPONSE_TIME_TARGET_MINUTES = 15;
+
 const chartConfig = {
   responseTime: {
     label: "Response Time",
@@ -86,12 +88,12 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
               label={{ value: 'Minutes', angle: -90, position: 'insideLeft' }}
             />
             
-            {/* Target line at 15 minutes */}
+            {/* Target line */}
             <ReferenceLine 
-              y={15} 
+              y={RESPONSE_TIME_TARGET_MINUTES} 
               stroke="#22c55e" 
               strokeDasharray="5 5"
-              label={{ value: "Target (15m)", position: "right" }}
+              label={{ value: `Target (${RESPONSE_TIME_TARGET_MINUTES}m)`, position: "right" }}
             />
             
             <ChartTooltip content={<ChartTooltipContent />} />

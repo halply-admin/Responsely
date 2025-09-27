@@ -120,22 +120,19 @@ export const getStatusDistribution = query({
       total,
       distribution: [
         {
-          status: 'Resolved',
+          status: 'resolved',
           count: resolved,
           percentage: Math.round((resolved / total) * 100),
-          color: '#22c55e'
         },
         {
-          status: 'Unresolved',
+          status: 'unresolved',
           count: unresolved,
           percentage: Math.round((unresolved / total) * 100),
-          color: '#f59e0b'
         },
         {
-          status: 'Escalated',
+          status: 'escalated',
           count: escalated,
           percentage: Math.round((escalated / total) * 100),
-          color: '#ef4444'
         }
       ]
     };
