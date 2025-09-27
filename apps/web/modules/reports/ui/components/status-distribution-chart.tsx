@@ -110,7 +110,7 @@ export const StatusDistributionChart = ({ filters }: StatusDistributionChartProp
             </Pie>
             <ChartTooltip
               content={({ active, payload }) => {
-                if (active && payload && payload.length) {
+                if (active && payload && payload.length && payload[0]) {
                   const data = payload[0].payload;
                   return (
                     <div className="rounded-lg border bg-background p-2 shadow-sm">
