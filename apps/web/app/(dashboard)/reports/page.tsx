@@ -4,16 +4,18 @@ import { PremiumFeatureOverlay } from "@/modules/billing/ui/components/premium-f
 import { ReportsView } from "@/modules/reports/ui/views/reports-view";
 
 const ReportsPage = () => {
+  const reportsView = <ReportsView />;
+  
   return (
     <Protect
       condition={(has) => has({ plan: "pro" })}
       fallback={
         <PremiumFeatureOverlay>
-          <ReportsView />
+          {reportsView}
         </PremiumFeatureOverlay>
       }
     >
-      <ReportsView />
+      {reportsView}
     </Protect>
   );
 };
