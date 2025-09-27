@@ -33,7 +33,7 @@ export interface ChartConfig {
   type: 'line' | 'bar' | 'pie' | 'donut' | 'area' | 'mixed';
   height?: number;
   responsive: boolean;
-  options: any;
+  options: Record<string, unknown>;
 }
 
 // ============================================================================
@@ -42,11 +42,9 @@ export interface ChartConfig {
 
 export abstract class BaseReport<T = unknown> {
   protected filters: ReportFilters;
-  protected refreshInterval?: number;
 
-  constructor(filters: ReportFilters, refreshInterval?: number) {
+  constructor(filters: ReportFilters) {
     this.filters = filters;
-    this.refreshInterval = refreshInterval;
   }
 
   abstract getTitle(): string;
@@ -325,6 +323,56 @@ export class AIHumanComparisonReport extends BaseReport<AIHumanComparison> {
     return {
       type: 'bar',
       height: 350,
+      responsive: true,
+      options: {}
+    };
+  }
+}
+
+// ============================================================================
+// RESPONSE TIME TRENDS
+// ============================================================================
+
+export interface ResponseTimeTrendsData {
+  trends: { timestamp: string; value: number }[];
+  avgResponseTime: number;
+  improvement: number;
+}
+
+export class ResponseTimeTrendsReport extends BaseReport<ResponseTimeTrendsData> {
+  getTitle(): string {
+    return "Response Time Trends";
+  }
+
+  getDescription(): string {
+    return "Average first response time trends over time";
+  }
+
+  getCategory(): 'performance' {
+    return 'performance';
+  }
+
+  async fetchData(): Promise<ResponseTimeTrendsData> {
+    // Mock data - replace with actual Convex queries
+    return {
+      trends: [
+        { timestamp: '2024-01-01', value: 22 },
+        { timestamp: '2024-01-02', value: 19 },
+        { timestamp: '2024-01-03', value: 17 },
+        { timestamp: '2024-01-04', value: 20 },
+        { timestamp: '2024-01-05', value: 15 },
+        { timestamp: '2024-01-06', value: 18 },
+        { timestamp: '2024-01-07', value: 16 },
+      ],
+      avgResponseTime: 18.5,
+      improvement: -12.3
+    };
+  }
+
+  getChartConfig(): ChartConfig {
+    return {
+      type: 'line',
+      height: 300,
       responsive: true,
       options: {}
     };

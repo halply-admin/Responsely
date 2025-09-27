@@ -2,20 +2,14 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@workspace/ui/components/chart";
-import { LineChart, Line, XAxis, YAxis, ResponsiveContainer, ReferenceLine } from "recharts";
+import { LineChart, Line, XAxis, YAxis, ReferenceLine } from "recharts";
 import { useEffect, useState } from "react";
-import { ReportFilters } from "@/modules/reports/lib/reports";
+import { ReportFilters, ResponseTimeTrendsReport, ResponseTimeTrendsData } from "@/modules/reports/lib/reports";
 import { Badge } from "@workspace/ui/components/badge";
 import { TrendingDown, TrendingUp } from "lucide-react";
 
 interface ResponseTimeTrendsChartProps {
   filters: ReportFilters;
-}
-
-interface ResponseTimeTrendsData {
-  trends: { timestamp: string; value: number }[];
-  avgResponseTime: number;
-  improvement: number;
 }
 
 const chartConfig = {
@@ -35,21 +29,9 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
       setIsLoading(true);
       setError(null);
       try {
-        // Mock data for demonstration
-        const mockData: ResponseTimeTrendsData = {
-          trends: [
-            { timestamp: '2024-01-01', value: 22 },
-            { timestamp: '2024-01-02', value: 19 },
-            { timestamp: '2024-01-03', value: 17 },
-            { timestamp: '2024-01-04', value: 20 },
-            { timestamp: '2024-01-05', value: 15 },
-            { timestamp: '2024-01-06', value: 18 },
-            { timestamp: '2024-01-07', value: 16 },
-          ],
-          avgResponseTime: 18.5,
-          improvement: -12.3
-        };
-        setData(mockData);
+        const report = new ResponseTimeTrendsReport(filters);
+        const result = await report.fetchData();
+        setData(result);
       } catch (error) {
         console.error('Failed to fetch response time trends:', error);
         setError('Failed to load chart data.');

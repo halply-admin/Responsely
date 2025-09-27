@@ -173,21 +173,16 @@ export const ReportsView = () => {
     </div>
   );
 
-  // If user doesn't have active subscription, show premium overlay
-  if (!hasActiveSubscription) {
-    return (
-      <MobileAwareLayout title="Reports">
+  // Show reports with premium overlay if subscription is not active
+  return (
+    <MobileAwareLayout title="Reports">
+      {hasActiveSubscription ? (
+        reportsContent
+      ) : (
         <PremiumFeatureOverlay>
           {reportsContent}
         </PremiumFeatureOverlay>
-      </MobileAwareLayout>
-    );
-  }
-
-  // Regular reports view for subscribed users
-  return (
-    <MobileAwareLayout title="Reports">
-      {reportsContent}
+      )}
     </MobileAwareLayout>
   );
 }; 

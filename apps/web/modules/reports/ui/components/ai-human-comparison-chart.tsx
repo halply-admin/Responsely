@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@workspace/ui/components/chart";
-import { BarChart, Bar, XAxis, YAxis, ResponsiveContainer, Legend } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, Legend } from "recharts";
 import { useEffect, useState } from "react";
 import { ReportFilters, AIHumanComparisonReport, AIHumanComparison } from "@/modules/reports/lib/reports";
 import { Badge } from "@workspace/ui/components/badge";

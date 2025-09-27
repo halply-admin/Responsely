@@ -2,7 +2,7 @@
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@workspace/ui/components/chart";
-import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
+import { PieChart, Pie, Cell } from "recharts";
 import { useEffect, useState } from "react";
 import { ReportFilters, ConversationStatusReport, StatusDistribution } from "@/modules/reports/lib/reports";
 
