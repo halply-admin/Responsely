@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle } from "@workspace/ui/components/card";
+import { Skeleton } from "@workspace/ui/components/skeleton";
 import { MessageSquare, Clock, CheckCircle, Bot } from "lucide-react";
 import { useQuery } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
@@ -18,9 +19,19 @@ interface MetricCardProps {
   trend?: 'up' | 'down' | 'stable';
   description?: string;
   positiveTrendDirection?: 'up' | 'down';
+  isLoading?: boolean;
 }
 
-const MetricCard = ({ title, icon: Icon, value, change, trend, description, positiveTrendDirection = 'up' }: MetricCardProps) => {
+const MetricCard = ({ 
+  title, 
+  icon: Icon, 
+  value, 
+  change, 
+  trend, 
+  description, 
+  positiveTrendDirection = 'up',
+  isLoading = false 
+}: MetricCardProps) => {
   const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
     if (trend === 'stable') return 'text-muted-foreground';
     
@@ -30,10 +41,31 @@ const MetricCard = ({ title, icon: Icon, value, change, trend, description, posi
   };
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
-    if (trend === 'up') return '↗';
-    if (trend === 'down') return '↙';
-    return '→';
+    if (trend === 'stable') return '→';
+    return trend === 'up' ? '↗' : '↘';
   };
+
+  if (isLoading) {
+    return (
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            <Skeleton className="h-4 w-32" />
+          </CardTitle>
+          <Skeleton className="h-4 w-4" />
+        </CardHeader>
+        <CardContent>
+          <div className="space-y-2">
+            <Skeleton className="h-8 w-20" />
+            <div className="flex items-center space-x-2">
+              <Skeleton className="h-4 w-12" />
+              <Skeleton className="h-4 w-24" />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <Card>
@@ -43,10 +75,12 @@ const MetricCard = ({ title, icon: Icon, value, change, trend, description, posi
       </CardHeader>
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
-        {change !== undefined && (
-          <p className={`text-xs flex items-center gap-1 ${getTrendColor(trend!)}`}>
-            <span>{getTrendIcon(trend!)}</span>
-            {Math.abs(change)}% {description}
+        {change !== undefined && trend && (
+          <p className="text-xs text-muted-foreground">
+            <span className={getTrendColor(trend)}>
+              {getTrendIcon(trend)} {Math.abs(change)}%
+            </span>
+            {description && ` ${description}`}
           </p>
         )}
       </CardContent>
@@ -59,30 +93,23 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
     startDate: filters.dateRange.start,
     endDate: filters.dateRange.end,
   });
-
   const isLoading = metrics === undefined;
+  const error = metrics === null;
 
-  if (isLoading) {
+  if (error) {
     return (
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {Array.from({ length: 4 }).map((_, i) => (
           <Card key={i}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <div className="h-4 w-24 bg-muted animate-pulse rounded" />
-              <div className="h-4 w-4 bg-muted animate-pulse rounded" />
-            </CardHeader>
-            <CardContent>
-              <div className="h-8 w-20 bg-muted animate-pulse rounded mb-2" />
-              <div className="h-4 w-32 bg-muted animate-pulse rounded" />
+            <CardContent className="p-6">
+              <div className="text-center text-muted-foreground">
+                Failed to load metrics
+              </div>
             </CardContent>
           </Card>
         ))}
       </div>
     );
-  }
-
-  if (!metrics) {
-    return <div>Error loading metrics</div>;
   }
 
   const formatValue = (value: number, unit?: string) => {
@@ -102,38 +129,42 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
     {
       title: "Total Conversations",
       icon: MessageSquare,
-      value: formatValue(metrics.totalConversations.current, metrics.totalConversations.unit),
-      change: metrics.totalConversations.change,
-      trend: metrics.totalConversations.trend,
-      positiveTrendDirection: metrics.totalConversations.positiveTrendDirection,
-      description: "vs last period"
+      value: isLoading ? '' : formatValue(metrics.totalConversations.current, metrics.totalConversations.unit),
+      change: metrics?.totalConversations.change,
+      trend: metrics?.totalConversations.trend,
+      positiveTrendDirection: metrics?.totalConversations.positiveTrendDirection,
+      description: "vs last period",
+      isLoading
     },
     {
       title: "Avg Response Time", 
       icon: Clock,
-      value: formatValue(metrics.avgFirstResponseTime.current, metrics.avgFirstResponseTime.unit),
-      change: metrics.avgFirstResponseTime.change,
-      trend: metrics.avgFirstResponseTime.trend,
-      positiveTrendDirection: metrics.avgFirstResponseTime.positiveTrendDirection,
-      description: "first response"
+      value: isLoading ? '' : formatValue(metrics.avgFirstResponseTime.current, metrics.avgFirstResponseTime.unit),
+      change: metrics?.avgFirstResponseTime.change,
+      trend: metrics?.avgFirstResponseTime.trend,
+      positiveTrendDirection: metrics?.avgFirstResponseTime.positiveTrendDirection,
+      description: "first response",
+      isLoading
     },
     {
       title: "Resolution Rate",
       icon: CheckCircle, 
-      value: formatValue(metrics.resolutionRate.current, metrics.resolutionRate.unit),
-      change: metrics.resolutionRate.change,
-      trend: metrics.resolutionRate.trend,
-      positiveTrendDirection: metrics.resolutionRate.positiveTrendDirection,
-      description: "successfully resolved"
+      value: isLoading ? '' : formatValue(metrics.resolutionRate.current, metrics.resolutionRate.unit),
+      change: metrics?.resolutionRate.change,
+      trend: metrics?.resolutionRate.trend,
+      positiveTrendDirection: metrics?.resolutionRate.positiveTrendDirection,
+      description: "successfully resolved",
+      isLoading
     },
     {
       title: "AI Resolution Rate",
       icon: Bot,
-      value: formatValue(metrics.aiResolutionRate.current, metrics.aiResolutionRate.unit),
-      change: metrics.aiResolutionRate.change,
-      trend: metrics.aiResolutionRate.trend,
-      positiveTrendDirection: metrics.aiResolutionRate.positiveTrendDirection,
-      description: "automated resolution"
+      value: isLoading ? '' : formatValue(metrics.aiResolutionRate.current, metrics.aiResolutionRate.unit),
+      change: metrics?.aiResolutionRate.change,
+      trend: metrics?.aiResolutionRate.trend,
+      positiveTrendDirection: metrics?.aiResolutionRate.positiveTrendDirection,
+      description: "automated resolution",
+      isLoading
     }
   ];
 

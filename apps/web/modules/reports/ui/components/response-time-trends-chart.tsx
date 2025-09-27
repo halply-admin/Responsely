@@ -31,7 +31,8 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
   const isLoading = data === undefined;
   const error = data === null;
 
-  const formatDate = (dateString: string) => {
+  const formatDate = (dateString: string | undefined): string => {
+    if (!dateString) return '';
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
