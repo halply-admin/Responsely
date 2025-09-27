@@ -1,4 +1,4 @@
-import { EmailConfig, DEFAULT_EMAIL_CONFIG } from "./types";
+import { EmailConfig, DEFAULT_EMAIL_CONFIG, EmailType } from "./types";
 
 /**
  * Format email address with name
@@ -52,7 +52,7 @@ export const truncateText = (text: string, maxLength: number): string => {
  */
 export const getTrackingHeaders = (
   entityId: string,
-  emailType: string
+  emailType: EmailType
 ): Array<{ name: string; value: string }> => {
   return [
     { name: "X-Entity-Ref-ID", value: entityId },
