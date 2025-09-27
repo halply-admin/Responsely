@@ -43,7 +43,8 @@ export const getOverviewMetrics = query({
         change: -17.0,
         trend: 'down' as const,
         target: 15.0,
-        unit: 'time' as const
+        unit: 'time' as const,
+        positiveTrendDirection: 'down' as const
       },
       resolutionRate: {
         current: 87.3,
@@ -59,7 +60,8 @@ export const getOverviewMetrics = query({
         change: -22.3,
         trend: 'down' as const,
         target: 8.0,
-        unit: 'percentage' as const
+        unit: 'percentage' as const,
+        positiveTrendDirection: 'down' as const
       },
       aiResolutionRate: {
         current: 76.4,
