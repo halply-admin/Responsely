@@ -4,6 +4,22 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { Resend, vOnEmailEventArgs } from "@convex-dev/resend";
 import { internal } from "./_generated/api";
+import { 
+  welcomeEmailTemplate, 
+  welcomeEmailSubject
+} from "./emails/templates/welcome";
+import {
+  escalationEmailTemplate,
+  escalationEmailSubject
+} from "./emails/templates/escalation";
+import {
+  getEmailConfig,
+  formatEmailAddress,
+  getTrackingHeaders,
+  sanitizeForEmail,
+  truncateText
+} from "./emails/utils";
+import { EMAIL_CONSTANTS } from "./emails/types";
 
 /**
  * NOTE:
@@ -99,18 +115,22 @@ export const sendWelcomeEmail = internalAction({
       // ✅ ADDED: Log the environment to confirm if testMode is active.
       console.log(`Sending welcome email in environment: ${process.env.NODE_ENV}`);
 
-      // ✅ CHANGED: Simplified to always use Resend's verified domain for reliability.
-      const fromAddress = "Responsely <onboarding@resend.dev>";
+      // ✅ CHANGED: Use reusable email configuration
+      const emailConfig = getEmailConfig();
+      const fromAddress = formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName);
+
+      // ✅ FIX: Sanitize userName once and reuse
+      const sanitizedUserName = sanitizeForEmail(args.userName);
 
       const emailId = await resend.sendEmail(ctx, {
         from: fromAddress,
         to: args.userEmail,
-        subject: "Welcome to Responsely! 🎉",
+        subject: welcomeEmailSubject(sanitizedUserName),
         html: welcomeEmailTemplate({
-          userName: args.userName,
-          dashboardUrl: "https://responsely.com/dashboard",
+          userName: sanitizedUserName,
+          dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
         }),
-        headers: [{ name: "X-Entity-Ref-ID", value: args.userId }],
+        headers: getTrackingHeaders(args.userId, "welcome"),
       });
 
       const emailIdString = String(emailId);
@@ -162,25 +182,32 @@ export const sendEscalationEmail = internalAction({
         return;
       }
 
-      // ✅ CHANGED: Use a reliable default "from" address but allow override from settings if present.
-      const fromName = emailSettings.fromName ?? "Responsely Alerts";
-      // Use the verified domain as a fallback to prevent delivery failures.
-      const fromEmail = emailSettings.fromEmail ?? "alerts@resend.dev";
+      // ✅ CHANGED: Use reusable email configuration with organization settings
+      const emailConfig = getEmailConfig({
+        fromName: emailSettings.fromName ?? "Responsely Alerts",
+        fromEmail: emailSettings.fromEmail,
+      });
 
       const emailPromises = emailSettings.escalationNotifyEmails.map(async (supportEmail: string) => {
         try {
+          const sanitizedMessage = sanitizeForEmail(truncateText(args.lastMessage, 500));
+          
+          // ✅ FIX: Sanitize customer data once and reuse
+          const sanitizedCustomerName = sanitizeForEmail(args.customerName || args.customerEmail);
+          const sanitizedCustomerEmail = sanitizeForEmail(args.customerEmail);
+          
           const emailId = await resend.sendEmail(ctx, {
-            from: `${fromName} <${fromEmail}>`,
+            from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
             to: supportEmail,
-            subject: `🚨 Support Escalation - ${args.customerName || args.customerEmail}`,
+            subject: escalationEmailSubject(sanitizedCustomerName),
             html: escalationEmailTemplate({
-              customerName: args.customerName || args.customerEmail,
-              customerEmail: args.customerEmail,
+              customerName: sanitizedCustomerName,
+              customerEmail: sanitizedCustomerEmail,
               conversationId: args.conversationId,
-              lastMessage: args.lastMessage,
-              dashboardUrl: `https://responsely.com/dashboard/conversations/${args.conversationId}`,
+              lastMessage: sanitizedMessage,
+              dashboardUrl: `${EMAIL_CONSTANTS.DASHBOARD_URL}/conversations/${args.conversationId}`,
             }),
-            headers: [{ name: "X-Entity-Ref-ID", value: args.conversationId }],
+            headers: getTrackingHeaders(args.conversationId, "escalation"),
           });
 
           const emailIdString = String(emailId);
@@ -279,35 +306,8 @@ export const cleanupOldEmailLogs = internalMutation({
 });
 
 // -----------------------------
-// HTML templates
+// HTML templates - MOVED TO /emails/templates/
 // -----------------------------
-
-const welcomeEmailTemplate = ({ userName, dashboardUrl }: { userName: string; dashboardUrl: string }) => {
-  // ... (This function is correct, no changes needed)
-  return `
-    <!DOCTYPE html><html><head><meta charset="utf-8"><title>Welcome to Responsely</title></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h1 style="color: #2563eb;">Welcome to Responsely! 🎉</h1>
-        <p>Hi ${userName},</p>
-        <p>We're excited to have you on board! Your customer support AI is ready to help you provide amazing customer experiences.</p>
-        <a href="${dashboardUrl}" style="background: #2563eb; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">Get Started</a>
-    </body></html>`;
-};
-
-const escalationEmailTemplate = ({
-  customerName, customerEmail, conversationId, lastMessage, dashboardUrl,
-}: {
-  customerName: string; customerEmail: string; conversationId: string; lastMessage: string; dashboardUrl: string;
-}) => {
-  // ... (This function is correct, no changes needed)
-  return `
-    <!DOCTYPE html><html><head><title>Support Escalation</title></head>
-    <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-        <h2 style="color: #dc2626;">🚨 Support Escalation Required</h2>
-        <p><strong>Customer:</strong> ${customerName}</p>
-        <p><strong>Email:</strong> ${customerEmail}</p>
-        <p><strong>Last Message:</strong></p>
-        <blockquote style="border-left: 4px solid #e5e7eb; padding-left: 15px; margin: 10px 0;">${lastMessage}</blockquote>
-        <a href="${dashboardUrl}" style="background: #dc2626; color: white; padding: 12px 30px; text-decoration: none; border-radius: 5px;">View in Dashboard</a>
-    </body></html>`;
-};
+// Email templates have been moved to separate files for better organization:
+// - ./emails/templates/welcome.ts
+// - ./emails/templates/escalation.ts
