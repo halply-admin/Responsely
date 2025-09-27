@@ -181,7 +181,7 @@ export const sendEscalationEmail = internalAction({
 
       // ✅ CHANGED: Use reusable email configuration with organization settings
       const emailConfig = getEmailConfig({
-        fromName: emailSettings.fromName || "Responsely Alerts",
+        fromName: emailSettings.fromName ?? "Responsely Alerts",
         fromEmail: emailSettings.fromEmail,
       });
 
