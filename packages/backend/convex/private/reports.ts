@@ -137,7 +137,7 @@ export const getOverviewMetrics = query({
         current: Math.round(avgResponseTimeCurrent * 10) / 10,
         previous: Math.round(avgResponseTimePrevious * 10) / 10,
         change: Math.round(avgResponseTimeChange * 10) / 10,
-        trend: getTrend(-avgResponseTimeChange), // Negative because lower is better
+        trend: getTrend(avgResponseTimeChange), // Lower is better, but trend shows actual direction
         target: 15.0,
         unit: 'time' as const,
         positiveTrendDirection: 'down' as const
@@ -155,7 +155,7 @@ export const getOverviewMetrics = query({
         current: Math.round(escalationRateCurrent * 10) / 10,
         previous: Math.round(escalationRatePrevious * 10) / 10,
         change: Math.round(escalationRateChange * 10) / 10,
-        trend: getTrend(-escalationRateChange), // Negative because lower is better
+        trend: getTrend(escalationRateChange), // Lower is better, but trend shows actual direction
         target: 8.0,
         unit: 'percentage' as const,
         positiveTrendDirection: 'down' as const

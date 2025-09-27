@@ -168,7 +168,7 @@ export const ReportsFilters = ({ filters, onFiltersChange }: ReportsFiltersProps
               <SelectContent>
                 <SelectItem value="all">All Plans</SelectItem>
                 <SelectItem value="active">Active</SelectItem>
-                <SelectItem value="inactive">Inactive</SelectItem>
+                <SelectItem value="expired">Expired</SelectItem>
               </SelectContent>
             </Select>
           </div>
