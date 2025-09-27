@@ -15,9 +15,9 @@ export const getEmailConfig = (
   customConfig?: Partial<EmailConfig>
 ): EmailConfig => {
   return {
-    fromName: customConfig?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName,
-    fromEmail: customConfig?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail,
-    replyToEmail: customConfig?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
+    fromName: customConfig?.fromName || DEFAULT_EMAIL_CONFIG.fromName,
+    fromEmail: customConfig?.fromEmail || DEFAULT_EMAIL_CONFIG.fromEmail,
+    replyToEmail: customConfig?.replyToEmail || DEFAULT_EMAIL_CONFIG.replyToEmail,
   };
 };
 

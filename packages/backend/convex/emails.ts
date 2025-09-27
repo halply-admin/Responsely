@@ -22,15 +22,13 @@ import {
 import { EMAIL_CONSTANTS } from "./emails/types";
 
 /**
- * NOTE:
- * - We DO NOT pass `internal.emails.handleEmailEvent` into the Resend constructor
- * to avoid circular type dependencies.
- * - The Resend instance uses `testMode` in development, which simulates email sending
+ * The Resend instance uses `testMode` in development, which simulates email sending
  * without dispatching real emails. Set NODE_ENV to "production" in your Convex
  * dashboard to send real emails.
  */
 export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.NODE_ENV === "development",
+  webhookHandler: internal.emails.handleEmailEvent,
 });
 
 // -----------------------------
@@ -184,7 +182,7 @@ export const sendEscalationEmail = internalAction({
 
       // ✅ CHANGED: Use reusable email configuration with organization settings
       const emailConfig = getEmailConfig({
-        fromName: emailSettings.fromName ?? "Responsely Alerts",
+        fromName: emailSettings.fromName || "Responsely Alerts",
         fromEmail: emailSettings.fromEmail,
       });
 
