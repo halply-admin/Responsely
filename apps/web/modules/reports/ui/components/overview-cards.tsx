@@ -114,8 +114,15 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
 
   const formatValue = (value: number, unit?: string) => {
     switch (unit) {
-      case 'time':
-        return value < 60 ? `${Math.round(value)}m` : `${Math.floor(value / 60)}h ${Math.round(value % 60)}m`;
+      case 'time': {
+        const totalMinutes = Math.round(value);
+        const hours = Math.floor(totalMinutes / 60);
+        const minutes = totalMinutes % 60;
+        if (hours > 0) {
+          return `${hours}h ${minutes}m`;
+        }
+        return `${minutes}m`;
+      }
       case 'percentage':
         return `${value}%`;
       case 'currency':

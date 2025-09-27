@@ -8,20 +8,25 @@ export interface DateRange {
 }
 
 export interface ReportFilters {
-  dateRange: DateRange;
-  status?: 'unresolved' | 'escalated' | 'resolved' | 'all';
-  organizationId?: string;
-  subscriptionStatus?: 'active' | 'inactive' | 'all';
+  dateRange: {
+    start: string; // ISO string
+    end: string; // ISO string
+  };
+  status: 'all' | 'resolved' | 'unresolved' | 'escalated';
+  subscriptionStatus?: 'all' | 'active' | 'expired';
 }
+
+// Define conversation status type for reuse
+export type ConversationStatus = 'resolved' | 'unresolved' | 'escalated';
 
 export interface MetricValue {
   current: number;
-  previous?: number;
-  change?: number;
+  previous: number;
+  change: number;
   trend: 'up' | 'down' | 'stable';
   target?: number;
-  unit?: 'number' | 'percentage' | 'currency' | 'time';
-  positiveTrendDirection?: 'up' | 'down'; // For metrics where down trend is positive (e.g., escalation rate)
+  unit: 'number' | 'percentage' | 'time' | 'currency';
+  positiveTrendDirection?: 'up' | 'down';
 }
 
 export interface TimeSeriesData {
@@ -45,7 +50,7 @@ export interface OverviewMetrics {
   totalConversations: MetricValue;
   avgFirstResponseTime: MetricValue;
   resolutionRate: MetricValue;
-  escalationRate: MetricValue;
+  escalationRate?: MetricValue;
   aiResolutionRate: MetricValue;
   activeUsers: MetricValue;
 }
@@ -56,7 +61,7 @@ export interface StatusDistribution {
   resolved: number;
   total: number;
   distribution: {
-    status: string;
+    status: ConversationStatus;
     count: number;
     percentage: number;
   }[];

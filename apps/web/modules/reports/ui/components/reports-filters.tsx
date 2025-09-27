@@ -7,7 +7,7 @@ import { CalendarIcon } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@workspace/ui/components/popover";
 import { Calendar } from "@workspace/ui/components/calendar";
 import { format } from "date-fns";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { DateRange } from "react-day-picker";
 import { cn } from "@workspace/ui/lib/utils";
 import { ReportFilters } from "@/modules/reports/lib/reports";
@@ -18,10 +18,15 @@ interface ReportsFiltersProps {
 }
 
 export const ReportsFilters = ({ filters, onFiltersChange }: ReportsFiltersProps) => {
-  const [date, setDate] = useState<DateRange | undefined>({
-    from: new Date(filters.dateRange.start),
-    to: new Date(filters.dateRange.end),
-  });
+  const [date, setDate] = useState<DateRange | undefined>();
+
+  // Sync internal state with prop changes
+  useEffect(() => {
+    setDate({
+      from: new Date(filters.dateRange.start),
+      to: new Date(filters.dateRange.end),
+    });
+  }, [filters.dateRange.start, filters.dateRange.end]);
 
   const handleDateChange = (newDate: DateRange | undefined) => {
     setDate(newDate);
