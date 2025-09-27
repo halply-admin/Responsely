@@ -59,14 +59,18 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
               <div className="text-sm text-muted-foreground">Average Response Time</div>
             </div>
             <div className="flex items-center gap-2">
-              {data && data.improvement < 0 ? (
-                <TrendingDown className="h-4 w-4 text-green-600" />
-              ) : (
-                <TrendingUp className="h-4 w-4 text-red-600" />
+              {data && (
+                <>
+                  {data.improvement > 0 ? (
+                    <TrendingDown className="h-4 w-4 text-green-600" />
+                  ) : (
+                    <TrendingUp className="h-4 w-4 text-red-600" />
+                  )}
+                  <Badge variant={data.improvement > 0 ? "default" : "destructive"}>
+                    {Math.abs(data.improvement)}% {data.improvement > 0 ? 'Improvement' : 'Decline'}
+                  </Badge>
+                </>
               )}
-              <Badge variant={data && data.improvement < 0 ? "default" : "destructive"}>
-                {data && Math.abs(data.improvement)}% {data && data.improvement < 0 ? 'Improvement' : 'Decline'}
-              </Badge>
             </div>
           </div>
         </div>
