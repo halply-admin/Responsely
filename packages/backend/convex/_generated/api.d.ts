@@ -9,6 +9,11 @@
  */
 
 import type * as constants from "../constants.js";
+import type * as emails_index from "../emails/index.js";
+import type * as emails_templates_escalation from "../emails/templates/escalation.js";
+import type * as emails_templates_welcome from "../emails/templates/welcome.js";
+import type * as emails_types from "../emails/types.js";
+import type * as emails_utils from "../emails/utils.js";
 import type * as emails from "../emails.js";
 import type * as http from "../http.js";
 import type * as lib_extractTextContent from "../lib/extractTextContent.js";
@@ -19,6 +24,7 @@ import type * as private_conversations from "../private/conversations.js";
 import type * as private_files from "../private/files.js";
 import type * as private_messages from "../private/messages.js";
 import type * as private_plugins from "../private/plugins.js";
+import type * as private_reports from "../private/reports.js";
 import type * as private_secrets from "../private/secrets.js";
 import type * as private_vapi from "../private/vapi.js";
 import type * as private_widgetSettings from "../private/widgetSettings.js";
@@ -26,6 +32,7 @@ import type * as public_contactSessions from "../public/contactSessions.js";
 import type * as public_conversations from "../public/conversations.js";
 import type * as public_messages from "../public/messages.js";
 import type * as public_organizations from "../public/organizations.js";
+import type * as public_reports from "../public/reports.js";
 import type * as public_secrets from "../public/secrets.js";
 import type * as public_widgetSettings from "../public/widgetSettings.js";
 import type * as system_ai_agents_supportAgent from "../system/ai/agents/supportAgent.js";
@@ -57,6 +64,11 @@ import type {
  */
 declare const fullApi: ApiFromModules<{
   constants: typeof constants;
+  "emails/index": typeof emails_index;
+  "emails/templates/escalation": typeof emails_templates_escalation;
+  "emails/templates/welcome": typeof emails_templates_welcome;
+  "emails/types": typeof emails_types;
+  "emails/utils": typeof emails_utils;
   emails: typeof emails;
   http: typeof http;
   "lib/extractTextContent": typeof lib_extractTextContent;
@@ -67,6 +79,7 @@ declare const fullApi: ApiFromModules<{
   "private/files": typeof private_files;
   "private/messages": typeof private_messages;
   "private/plugins": typeof private_plugins;
+  "private/reports": typeof private_reports;
   "private/secrets": typeof private_secrets;
   "private/vapi": typeof private_vapi;
   "private/widgetSettings": typeof private_widgetSettings;
@@ -74,6 +87,7 @@ declare const fullApi: ApiFromModules<{
   "public/conversations": typeof public_conversations;
   "public/messages": typeof public_messages;
   "public/organizations": typeof public_organizations;
+  "public/reports": typeof public_reports;
   "public/secrets": typeof public_secrets;
   "public/widgetSettings": typeof public_widgetSettings;
   "system/ai/agents/supportAgent": typeof system_ai_agents_supportAgent;

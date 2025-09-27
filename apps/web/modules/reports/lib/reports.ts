@@ -21,6 +21,7 @@ export interface MetricValue {
   trend: 'up' | 'down' | 'stable';
   target?: number;
   unit?: 'number' | 'percentage' | 'currency' | 'time';
+  positiveTrendDirection?: 'up' | 'down'; // For metrics where down trend is positive (e.g., escalation rate)
 }
 
 export interface TimeSeriesData {
@@ -99,7 +100,7 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
   }
 
   async fetchData(): Promise<OverviewMetrics> {
-    // Mock data - replace with actual Convex queries
+    // This will be handled by the React component
     return {
       totalConversations: {
         current: 1247,
@@ -107,7 +108,7 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
         change: 13.6,
         trend: 'up',
         target: 1200,
-        unit: 'number'
+        unit: 'number',
       },
       avgFirstResponseTime: {
         current: 18.5,
@@ -115,7 +116,8 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
         change: -17.0,
         trend: 'down',
         target: 15.0,
-        unit: 'time'
+        unit: 'time',
+        positiveTrendDirection: 'down',
       },
       resolutionRate: {
         current: 87.3,
@@ -123,7 +125,7 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
         change: 3.8,
         trend: 'up',
         target: 90.0,
-        unit: 'percentage'
+        unit: 'percentage',
       },
       escalationRate: {
         current: 8.7,
@@ -131,7 +133,8 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
         change: -22.3,
         trend: 'down',
         target: 8.0,
-        unit: 'percentage'
+        unit: 'percentage',
+        positiveTrendDirection: 'down',
       },
       aiResolutionRate: {
         current: 76.4,
@@ -139,15 +142,15 @@ export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
         change: 6.0,
         trend: 'up',
         target: 80.0,
-        unit: 'percentage'
+        unit: 'percentage',
       },
       activeUsers: {
         current: 156,
         previous: 142,
         change: 9.9,
         trend: 'up',
-        unit: 'number'
-      }
+        unit: 'number',
+      },
     };
   }
 
@@ -192,37 +195,13 @@ export class ConversationStatusReport extends BaseReport<StatusDistribution> {
   }
 
   async fetchData(): Promise<StatusDistribution> {
-    // Mock data
-    const unresolved = 342;
-    const escalated = 89;
-    const resolved = 816;
-    const total = unresolved + escalated + resolved;
-
+    // This will be handled by the React component
     return {
-      unresolved,
-      escalated,
-      resolved,
-      total,
-      distribution: [
-        {
-          status: 'Resolved',
-          count: resolved,
-          percentage: Math.round((resolved / total) * 100),
-          color: '#22c55e'
-        },
-        {
-          status: 'Unresolved',
-          count: unresolved,
-          percentage: Math.round((unresolved / total) * 100),
-          color: '#f59e0b'
-        },
-        {
-          status: 'Escalated',
-          count: escalated,
-          percentage: Math.round((escalated / total) * 100),
-          color: '#ef4444'
-        }
-      ]
+      unresolved: 0,
+      escalated: 0,
+      resolved: 0,
+      total: 0,
+      distribution: [],
     };
   }
 
@@ -276,46 +255,21 @@ export class AIHumanComparisonReport extends BaseReport<AIHumanComparison> {
   }
 
   async fetchData(): Promise<AIHumanComparison> {
-    const ai = {
-      totalResolved: 623,
-      avgResolutionTime: 2.3,
-      resolutionRate: 76.4,
-      costPerResolution: 0.85
-    };
-
-    const human = {
-      totalResolved: 193,
-      avgResolutionTime: 12.7,
-      resolutionRate: 94.2,
-      costPerResolution: 18.50
-    };
-
+    // This will be handled by the React component
     return {
-      ai,
-      human,
-      comparison: [
-        {
-          metric: 'Resolution Time (min)',
-          ai: ai.avgResolutionTime,
-          human: human.avgResolutionTime,
-          difference: -81.9,
-          better: 'ai'
-        },
-        {
-          metric: 'Resolution Rate (%)',
-          ai: ai.resolutionRate,
-          human: human.resolutionRate,
-          difference: -18.9,
-          better: 'human'
-        },
-        {
-          metric: 'Cost per Resolution ($)',
-          ai: ai.costPerResolution,
-          human: human.costPerResolution,
-          difference: -95.4,
-          better: 'ai'
-        }
-      ]
+      ai: {
+        totalResolved: 0,
+        avgResolutionTime: 0,
+        resolutionRate: 0,
+        costPerResolution: 0,
+      },
+      human: {
+        totalResolved: 0,
+        avgResolutionTime: 0,
+        resolutionRate: 0,
+        costPerResolution: 0,
+      },
+      comparison: [],
     };
   }
 
@@ -353,19 +307,11 @@ export class ResponseTimeTrendsReport extends BaseReport<ResponseTimeTrendsData>
   }
 
   async fetchData(): Promise<ResponseTimeTrendsData> {
-    // Mock data - replace with actual Convex queries
+    // This will be handled by the React component
     return {
-      trends: [
-        { timestamp: '2024-01-01', value: 22 },
-        { timestamp: '2024-01-02', value: 19 },
-        { timestamp: '2024-01-03', value: 17 },
-        { timestamp: '2024-01-04', value: 20 },
-        { timestamp: '2024-01-05', value: 15 },
-        { timestamp: '2024-01-06', value: 18 },
-        { timestamp: '2024-01-07', value: 16 },
-      ],
-      avgResponseTime: 18.5,
-      improvement: -12.3
+      trends: [],
+      avgResponseTime: 0,
+      improvement: 0,
     };
   }
 

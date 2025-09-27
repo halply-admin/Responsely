@@ -16,17 +16,16 @@ interface MetricCardProps {
   change?: number;
   trend?: 'up' | 'down' | 'stable';
   description?: string;
+  positiveTrendDirection?: 'up' | 'down';
 }
 
-const MetricCard = ({ title, icon: Icon, value, change, trend, description }: MetricCardProps) => {
-  const getTrendColor = (trend: 'up' | 'down' | 'stable', isPositiveMetric: boolean = true) => {
+const MetricCard = ({ title, icon: Icon, value, change, trend, description, positiveTrendDirection = 'up' }: MetricCardProps) => {
+  const getTrendColor = (trend: 'up' | 'down' | 'stable') => {
     if (trend === 'stable') return 'text-muted-foreground';
     
-    if (isPositiveMetric) {
-      return trend === 'up' ? 'text-green-600' : 'text-red-600';
-    } else {
-      return trend === 'down' ? 'text-green-600' : 'text-red-600';
-    }
+    // Use the explicit positiveTrendDirection instead of hardcoded logic
+    const isPositiveTrend = trend === positiveTrendDirection;
+    return isPositiveTrend ? 'text-green-600' : 'text-red-600';
   };
 
   const getTrendIcon = (trend: 'up' | 'down' | 'stable') => {
@@ -34,9 +33,6 @@ const MetricCard = ({ title, icon: Icon, value, change, trend, description }: Me
     if (trend === 'down') return '↙';
     return '→';
   };
-
-  const isPositiveMetric = !title.toLowerCase().includes('escalation') && 
-                          !title.toLowerCase().includes('response time');
 
   return (
     <Card>
@@ -47,7 +43,7 @@ const MetricCard = ({ title, icon: Icon, value, change, trend, description }: Me
       <CardContent>
         <div className="text-2xl font-bold">{value}</div>
         {change !== undefined && (
-          <p className={`text-xs flex items-center gap-1 ${getTrendColor(trend!, isPositiveMetric)}`}>
+          <p className={`text-xs flex items-center gap-1 ${getTrendColor(trend!)}`}>
             <span>{getTrendIcon(trend!)}</span>
             {Math.abs(change)}% {description}
           </p>
@@ -121,6 +117,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.totalConversations.current, metrics.totalConversations.unit),
       change: metrics.totalConversations.change,
       trend: metrics.totalConversations.trend,
+      positiveTrendDirection: metrics.totalConversations.positiveTrendDirection,
       description: "vs last period"
     },
     {
@@ -129,6 +126,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.avgFirstResponseTime.current, metrics.avgFirstResponseTime.unit),
       change: metrics.avgFirstResponseTime.change,
       trend: metrics.avgFirstResponseTime.trend,
+      positiveTrendDirection: metrics.avgFirstResponseTime.positiveTrendDirection,
       description: "first response"
     },
     {
@@ -137,6 +135,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.resolutionRate.current, metrics.resolutionRate.unit),
       change: metrics.resolutionRate.change,
       trend: metrics.resolutionRate.trend,
+      positiveTrendDirection: metrics.resolutionRate.positiveTrendDirection,
       description: "successfully resolved"
     },
     {
@@ -145,6 +144,7 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
       value: formatValue(metrics.aiResolutionRate.current, metrics.aiResolutionRate.unit),
       change: metrics.aiResolutionRate.change,
       trend: metrics.aiResolutionRate.trend,
+      positiveTrendDirection: metrics.aiResolutionRate.positiveTrendDirection,
       description: "automated resolution"
     }
   ];

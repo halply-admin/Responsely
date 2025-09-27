@@ -1,11 +1,12 @@
 "use client";
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@workspace/ui/components/card";
 import { ChartContainer, ChartTooltip, ChartTooltipContent } from "@workspace/ui/components/chart";
 import { BarChart, Bar, XAxis, YAxis, Legend } from "recharts";
-import { useEffect, useState } from "react";
-import { ReportFilters, AIHumanComparisonReport, AIHumanComparison } from "@/modules/reports/lib/reports";
+import { useQuery } from "convex/react";
+import { api } from "@workspace/backend/_generated/api";
+import { ReportFilters, AIHumanComparison } from "@/modules/reports/lib/reports";
 import { Badge } from "@workspace/ui/components/badge";
+import { ChartCard } from "./chart-card";
 
 interface AIHumanComparisonChartProps {
   filters: ReportFilters;
@@ -18,146 +19,98 @@ const chartConfig = {
   },
   human: {
     label: "Human Agent",
-    color: "#8b5cf6",
+    color: "#22c55e",
   },
 } as const;
 
 export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps) => {
-  const [data, setData] = useState<AIHumanComparison | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const data = useQuery(api.private.reports.getAIHumanComparison, {
+    startDate: filters.dateRange.start,
+    endDate: filters.dateRange.end,
+  });
 
-  useEffect(() => {
-    const fetchData = async () => {
-      setIsLoading(true);
-      setError(null);
-      try {
-        const report = new AIHumanComparisonReport(filters);
-        const result = await report.fetchData();
-        setData(result);
-      } catch (error) {
-        console.error('Failed to fetch AI vs Human comparison:', error);
-        setError('Failed to load chart data.');
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const isLoading = data === undefined;
+  const error = data === null;
 
-    fetchData();
-  }, [filters]);
-
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>AI vs Human Performance</CardTitle>
-          <CardDescription>Comparative analysis of resolution effectiveness</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px] flex items-center justify-center">
-            <div className="animate-pulse">Loading chart...</div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>AI vs Human Performance</CardTitle>
-          <CardDescription>Comparative analysis of resolution effectiveness</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="h-[400px] flex items-center justify-center">
-            <div className="text-muted-foreground">
-              {error || 'Failed to load chart data'}
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // Transform data for the chart
-  const chartData = [
-    {
-      metric: "Total Resolved",
-      ai: data.ai.totalResolved,
-      human: data.human.totalResolved,
-    },
-    {
-      metric: "Resolution Rate (%)",
-      ai: data.ai.resolutionRate,
-      human: data.human.resolutionRate,
-    },
-    {
-      metric: "Avg Time (min)",
-      ai: data.ai.avgResolutionTime,
-      human: data.human.avgResolutionTime,
-    },
-  ];
+  const chartData = data?.comparison.map((item) => ({
+    metric: item.metric,
+    ai: item.ai,
+    human: item.human,
+  })) || [];
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>AI vs Human Performance</CardTitle>
-        <CardDescription>
-          Comparing effectiveness across key metrics
-        </CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer
-          config={chartConfig}
-          className="h-[350px]"
-        >
-          <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
-            <XAxis 
-              dataKey="metric" 
-              tick={{ fontSize: 12 }}
-              tickLine={false}
-              axisLine={false}
-            />
-            <YAxis 
-              tick={{ fontSize: 12 }}
-              tickLine={false}
-              axisLine={false}
-            />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Legend />
-            <Bar 
-              dataKey="ai" 
-              fill={chartConfig.ai.color}
-              name="AI Agent"
-              radius={[2, 2, 0, 0]}
-            />
-            <Bar 
-              dataKey="human" 
-              fill={chartConfig.human.color}
-              name="Human Agent"
-              radius={[2, 2, 0, 0]}
-            />
-          </BarChart>
-        </ChartContainer>
-
-        {/* Key Insights */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          {data.comparison.map((item) => (
-            <div key={item.metric} className="p-3 bg-muted/50 rounded-lg">
-              <div className="text-sm font-medium mb-1">{item.metric}</div>
-              <div className="flex items-center gap-2">
-                <Badge variant={item.better === 'ai' ? 'default' : 'secondary'}>
-                  {item.better === 'ai' ? 'AI Better' : 'Human Better'}
-                </Badge>
-                <span className="text-sm text-muted-foreground">
-                  {Math.abs(item.difference)}% difference
-                </span>
-              </div>
-            </div>
-          ))}
+    <ChartCard
+      title="AI vs Human Performance"
+      description="Comparative analysis of resolution effectiveness"
+      isLoading={isLoading}
+      error={error}
+      height="h-[400px]"
+    >
+      {/* Performance Summary */}
+      {data && (
+        <div className="grid grid-cols-2 gap-4 mb-6">
+          <div className="text-center p-4 bg-blue-50 rounded-lg">
+            <div className="text-2xl font-bold text-blue-600">{data.ai.totalResolved}</div>
+            <div className="text-sm text-blue-600">AI Resolutions</div>
+            <div className="text-xs text-muted-foreground">{data.ai.resolutionRate}% success rate</div>
+          </div>
+          <div className="text-center p-4 bg-green-50 rounded-lg">
+            <div className="text-2xl font-bold text-green-600">{data.human.totalResolved}</div>
+            <div className="text-sm text-green-600">Human Resolutions</div>
+            <div className="text-xs text-muted-foreground">{data.human.resolutionRate}% success rate</div>
+          </div>
         </div>
-      </CardContent>
-    </Card>
+      )}
+
+      <ChartContainer
+        config={chartConfig}
+        className="h-[300px]"
+      >
+        <BarChart data={chartData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+          <XAxis 
+            dataKey="metric" 
+            tick={{ fontSize: 11 }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <YAxis 
+            tick={{ fontSize: 12 }}
+            tickLine={false}
+            axisLine={false}
+          />
+          <ChartTooltip content={<ChartTooltipContent />} />
+          <Legend />
+          <Bar 
+            dataKey="ai" 
+            fill={chartConfig.ai.color}
+            name={chartConfig.ai.label}
+            radius={[2, 2, 0, 0]}
+          />
+          <Bar 
+            dataKey="human" 
+            fill={chartConfig.human.color}
+            name={chartConfig.human.label}
+            radius={[2, 2, 0, 0]}
+          />
+        </BarChart>
+      </ChartContainer>
+
+      {/* Key Insights */}
+      {data && (
+        <div className="mt-4">
+          <h4 className="text-sm font-medium mb-2">Key Insights</h4>
+          <div className="grid gap-2">
+            {data.comparison.map((item) => (
+              <div key={item.metric} className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{item.metric}</span>
+                <Badge variant={item.better === 'ai' ? 'default' : 'secondary'}>
+                  {item.better === 'ai' ? 'AI Better' : 'Human Better'} ({Math.abs(item.difference)}%)
+                </Badge>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </ChartCard>
   );
 }; 
