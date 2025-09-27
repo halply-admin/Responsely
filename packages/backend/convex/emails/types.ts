@@ -14,8 +14,8 @@ export interface EmailConfig {
 }
 
 export const DEFAULT_EMAIL_CONFIG: EmailConfig = {
-  fromName: "Responsely",
-  fromEmail: "support@responsely.ai",
+  fromName: "Halply",
+  fromEmail: "send@responsely.ai",
   replyToEmail: "support@responsely.ai",
 };
 

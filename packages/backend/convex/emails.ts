@@ -22,10 +22,7 @@ import {
 import { EMAIL_CONSTANTS } from "./emails/types";
 
 /**
- * NOTE:
- * - We DO NOT pass `internal.emails.handleEmailEvent` into the Resend constructor
- * to avoid circular type dependencies.
- * - The Resend instance uses `testMode` in development, which simulates email sending
+ * The Resend instance uses `testMode` in development, which simulates email sending
  * without dispatching real emails. Set NODE_ENV to "production" in your Convex
  * dashboard to send real emails.
  */
