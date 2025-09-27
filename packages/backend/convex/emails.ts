@@ -4,6 +4,7 @@ import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { Resend, vOnEmailEventArgs } from "@convex-dev/resend";
 import { internal } from "./_generated/api";
+import { createClerkClient } from "@clerk/backend";
 import { 
   welcomeEmailTemplate, 
   welcomeEmailSubject
@@ -28,6 +29,11 @@ import { EMAIL_CONSTANTS } from "./emails/types";
  */
 export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.NODE_ENV === "development",
+});
+
+// Clerk client for organization member access
+const clerkClient = createClerkClient({
+  secretKey: process.env.CLERK_SECRET_KEY || "",
 });
 
 // -----------------------------
@@ -164,34 +170,86 @@ export const sendEscalationEmail = internalAction({
   args: {
     conversationId: v.string(),
     organizationId: v.string(),
-    customerEmail: v.string(),
-    customerName: v.optional(v.string()),
-    lastMessage: v.string(),
+    threadId: v.string(),
   },
   handler: async (ctx, args) => {
     try {
+      // Get conversation with contact session details
+      const conversation = await ctx.runQuery(internal.system.conversations.getByThreadId, {
+        threadId: args.threadId,
+      });
+
+      if (!conversation) {
+        console.log(`Conversation not found: ${args.conversationId}`);
+        return;
+      }
+
+      // Get contact session for customer details
+      const contactSession = await ctx.runQuery(internal.system.contactSessions.getOne, {
+        contactSessionId: conversation.contactSessionId,
+      });
+
+      if (!contactSession) {
+        console.log(`Contact session not found for conversation: ${args.conversationId}`);
+        return;
+      }
+
+      // Get email settings
       const emailSettings = await ctx.runQuery(internal.emails.getEmailSettings, {
         organizationId: args.organizationId,
       });
 
-      if (!emailSettings?.enableEscalationEmails || !emailSettings.escalationNotifyEmails?.length) {
+      // Skip if escalation emails are disabled
+      if (emailSettings && !emailSettings.enableEscalationEmails) {
         console.log(`Escalation emails disabled for organization: ${args.organizationId}`);
         return;
       }
 
-      // ✅ CHANGED: Use reusable email configuration with organization settings
+      // Get notification emails from Clerk organization members
+      let notificationEmails: string[] = [];
+      
+      try {
+        const orgMembers = await clerkClient.organizations.getOrganizationMembershipList({
+          organizationId: args.organizationId,
+        });
+
+        notificationEmails = orgMembers.data
+          .filter(member => member.publicUserData && 'emailAddress' in member.publicUserData && member.publicUserData.emailAddress)
+          .map(member => (member.publicUserData as any).emailAddress as string);
+
+        console.log(`Found ${notificationEmails.length} team members for escalation notifications`);
+        
+      } catch (clerkError) {
+        console.error("Failed to get Clerk organization members:", clerkError);
+        
+        // Fallback: Use manual emails from settings if Clerk fails
+        if (emailSettings?.escalationNotifyEmails?.length) {
+          notificationEmails = emailSettings.escalationNotifyEmails;
+          console.log("Using manual escalation emails as fallback");
+        }
+      }
+
+      // Exit if no emails found
+      if (notificationEmails.length === 0) {
+        console.log(`No notification emails found for organization: ${args.organizationId}`);
+        return;
+      }
+
+      // Use a simple message for context (can be enhanced later)
+      const lastCustomerMessage = "Customer has requested human assistance";
+
+      // Email configuration
       const emailConfig = getEmailConfig({
-        fromName: emailSettings.fromName ?? "Responsely Alerts",
-        fromEmail: emailSettings.fromEmail,
+        fromName: emailSettings?.fromName ?? "Support Alerts",
+        fromEmail: emailSettings?.fromEmail,
       });
 
-      const emailPromises = emailSettings.escalationNotifyEmails.map(async (supportEmail: string) => {
+      // Send emails to all team members
+      const emailPromises = notificationEmails.map(async (supportEmail: string) => {
         try {
-          const sanitizedMessage = sanitizeForEmail(truncateText(args.lastMessage, 500));
-          
-          // ✅ FIX: Sanitize customer data once and reuse
-          const sanitizedCustomerName = sanitizeForEmail(args.customerName || args.customerEmail);
-          const sanitizedCustomerEmail = sanitizeForEmail(args.customerEmail);
+          const sanitizedMessage = sanitizeForEmail(truncateText(lastCustomerMessage, 500));
+          const sanitizedCustomerName = sanitizeForEmail(contactSession.name || contactSession.email);
+          const sanitizedCustomerEmail = sanitizeForEmail(contactSession.email);
           
           const emailId = await resend.sendEmail(ctx, {
             from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
@@ -214,6 +272,8 @@ export const sendEscalationEmail = internalAction({
             emailType: "escalation",
             recipientEmail: supportEmail,
           });
+
+          console.log(`Escalation email sent to: ${supportEmail}`);
         } catch (error) {
           console.error(`Failed to send escalation to ${supportEmail}:`, error);
           const errorMessage = error instanceof Error ? error.stack || error.message : "Unknown error";
