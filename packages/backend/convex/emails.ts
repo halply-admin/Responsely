@@ -119,12 +119,15 @@ export const sendWelcomeEmail = internalAction({
       const emailConfig = getEmailConfig();
       const fromAddress = formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName);
 
+      // ✅ FIX: Sanitize userName once and reuse
+      const sanitizedUserName = sanitizeForEmail(args.userName);
+
       const emailId = await resend.sendEmail(ctx, {
         from: fromAddress,
         to: args.userEmail,
-        subject: welcomeEmailSubject(sanitizeForEmail(args.userName)),
+        subject: welcomeEmailSubject(sanitizedUserName),
         html: welcomeEmailTemplate({
-          userName: sanitizeForEmail(args.userName),
+          userName: sanitizedUserName,
           dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
         }),
         headers: getTrackingHeaders(args.userId, "welcome"),
@@ -189,13 +192,17 @@ export const sendEscalationEmail = internalAction({
         try {
           const sanitizedMessage = sanitizeForEmail(truncateText(args.lastMessage, 500));
           
+          // ✅ FIX: Sanitize customer data once and reuse
+          const sanitizedCustomerName = sanitizeForEmail(args.customerName || args.customerEmail);
+          const sanitizedCustomerEmail = sanitizeForEmail(args.customerEmail);
+          
           const emailId = await resend.sendEmail(ctx, {
             from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
             to: supportEmail,
-            subject: escalationEmailSubject(sanitizeForEmail(args.customerName || args.customerEmail)),
+            subject: escalationEmailSubject(sanitizedCustomerName),
             html: escalationEmailTemplate({
-              customerName: sanitizeForEmail(args.customerName || args.customerEmail),
-              customerEmail: sanitizeForEmail(args.customerEmail),
+              customerName: sanitizedCustomerName,
+              customerEmail: sanitizedCustomerEmail,
               conversationId: args.conversationId,
               lastMessage: sanitizedMessage,
               dashboardUrl: `${EMAIL_CONSTANTS.DASHBOARD_URL}/conversations/${args.conversationId}`,

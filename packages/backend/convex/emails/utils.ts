@@ -14,10 +14,13 @@ export const formatEmailAddress = (email: string, name?: string): string => {
 export const getEmailConfig = (
   customConfig?: Partial<EmailConfig>
 ): EmailConfig => {
-  return {
-    ...DEFAULT_EMAIL_CONFIG,
-    ...customConfig,
-  };
+  const config = { ...DEFAULT_EMAIL_CONFIG, ...customConfig };
+  
+  // ✅ FIX: Ensure required fields are never undefined
+  config.fromEmail = customConfig?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail;
+  config.fromName = customConfig?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName;
+  
+  return config;
 };
 
 /**
@@ -37,6 +40,12 @@ export const sanitizeForEmail = (content: string): string => {
  */
 export const truncateText = (text: string, maxLength: number): string => {
   if (text.length <= maxLength) return text;
+  
+  // ✅ FIX: Handle edge case where maxLength <= 3
+  if (maxLength <= 3) {
+    return text.slice(0, maxLength);
+  }
+  
   return text.substring(0, maxLength - 3) + "...";
 };
 
