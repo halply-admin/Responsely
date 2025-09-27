@@ -28,7 +28,6 @@ import { EMAIL_CONSTANTS } from "./emails/types";
  */
 export const resend: Resend = new Resend(components.resend, {
   testMode: process.env.NODE_ENV === "development",
-  webhookHandler: internal.emails.handleEmailEvent,
 });
 
 // -----------------------------
