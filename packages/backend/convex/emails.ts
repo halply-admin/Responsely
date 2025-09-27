@@ -122,9 +122,9 @@ export const sendWelcomeEmail = internalAction({
       const emailId = await resend.sendEmail(ctx, {
         from: fromAddress,
         to: args.userEmail,
-        subject: welcomeEmailSubject(args.userName),
+        subject: welcomeEmailSubject(sanitizeForEmail(args.userName)),
         html: welcomeEmailTemplate({
-          userName: args.userName,
+          userName: sanitizeForEmail(args.userName),
           dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
         }),
         headers: getTrackingHeaders(args.userId, "welcome"),
@@ -192,10 +192,10 @@ export const sendEscalationEmail = internalAction({
           const emailId = await resend.sendEmail(ctx, {
             from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
             to: supportEmail,
-            subject: escalationEmailSubject(args.customerName || args.customerEmail),
+            subject: escalationEmailSubject(sanitizeForEmail(args.customerName || args.customerEmail)),
             html: escalationEmailTemplate({
-              customerName: args.customerName || args.customerEmail,
-              customerEmail: args.customerEmail,
+              customerName: sanitizeForEmail(args.customerName || args.customerEmail),
+              customerEmail: sanitizeForEmail(args.customerEmail),
               conversationId: args.conversationId,
               lastMessage: sanitizedMessage,
               dashboardUrl: `${EMAIL_CONSTANTS.DASHBOARD_URL}/conversations/${args.conversationId}`,
