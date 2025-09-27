@@ -25,16 +25,19 @@ const chartConfig = {
 export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps) => {
   const [data, setData] = useState<AIHumanComparison | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         const report = new AIHumanComparisonReport(filters);
         const result = await report.fetchData();
         setData(result);
       } catch (error) {
         console.error('Failed to fetch AI vs Human comparison:', error);
+        setError('Failed to load chart data.');
       } finally {
         setIsLoading(false);
       }
@@ -43,7 +46,7 @@ export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps)
     fetchData();
   }, [filters]);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -53,6 +56,24 @@ export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps)
         <CardContent>
           <div className="h-[400px] flex items-center justify-center">
             <div className="animate-pulse">Loading chart...</div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (error || !data) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>AI vs Human Performance</CardTitle>
+          <CardDescription>Comparative analysis of resolution effectiveness</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[400px] flex items-center justify-center">
+            <div className="text-muted-foreground">
+              {error || 'Failed to load chart data'}
+            </div>
           </div>
         </CardContent>
       </Card>
@@ -122,8 +143,8 @@ export const AIHumanComparisonChart = ({ filters }: AIHumanComparisonChartProps)
 
         {/* Key Insights */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-          {data.comparison.map((item, index) => (
-            <div key={index} className="p-3 bg-muted/50 rounded-lg">
+          {data.comparison.map((item) => (
+            <div key={item.metric} className="p-3 bg-muted/50 rounded-lg">
               <div className="text-sm font-medium mb-1">{item.metric}</div>
               <div className="flex items-center gap-2">
                 <Badge variant={item.better === 'ai' ? 'default' : 'secondary'}>

@@ -18,15 +18,7 @@ import { AIEffectivenessChart } from "../components/ai-effectiveness-chart";
 import { ReportFilters } from "@/modules/reports/lib/reports";
 import { PremiumFeatureOverlay } from "@/modules/billing/ui/components/premium-feature-overlay";
 import { MobileAwareLayout } from "@/modules/dashboard/ui/layouts/mobile-aware-layout";
-
-// Mock user subscription status - replace with actual auth/subscription logic
-const useSubscriptionStatus = () => {
-  // This should come from your auth/subscription provider
-  return {
-    isActive: false, // Set to true to test without paywall
-    plan: 'free', // 'free', 'pro', 'enterprise'
-  };
-};
+import { useSubscriptionStatus } from "@/modules/billing/hooks/use-subscription-status";
 
 export const ReportsView = () => {
   const [filters, setFilters] = useState<ReportFilters>({

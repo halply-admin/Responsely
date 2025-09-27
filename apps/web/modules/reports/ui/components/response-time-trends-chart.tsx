@@ -12,6 +12,12 @@ interface ResponseTimeTrendsChartProps {
   filters: ReportFilters;
 }
 
+interface ResponseTimeTrendsData {
+  trends: { timestamp: string; value: number }[];
+  avgResponseTime: number;
+  improvement: number;
+}
+
 const chartConfig = {
   responseTime: {
     label: "Response Time",
@@ -20,15 +26,17 @@ const chartConfig = {
 } as const;
 
 export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProps) => {
-  const [data, setData] = useState<any>(null);
+  const [data, setData] = useState<ResponseTimeTrendsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       setIsLoading(true);
+      setError(null);
       try {
         // Mock data for demonstration
-        const mockData = {
+        const mockData: ResponseTimeTrendsData = {
           trends: [
             { timestamp: '2024-01-01', value: 22 },
             { timestamp: '2024-01-02', value: 19 },
@@ -44,6 +52,7 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
         setData(mockData);
       } catch (error) {
         console.error('Failed to fetch response time trends:', error);
+        setError('Failed to load chart data.');
       } finally {
         setIsLoading(false);
       }
@@ -52,7 +61,7 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
     fetchData();
   }, [filters]);
 
-  if (isLoading || !data) {
+  if (isLoading) {
     return (
       <Card>
         <CardHeader>
@@ -68,12 +77,30 @@ export const ResponseTimeTrendsChart = ({ filters }: ResponseTimeTrendsChartProp
     );
   }
 
+  if (error || !data) {
+    return (
+      <Card>
+        <CardHeader>
+          <CardTitle>Response Time Trends</CardTitle>
+          <CardDescription>Average first response time over time</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="h-[300px] flex items-center justify-center">
+            <div className="text-muted-foreground">
+              {error || 'Failed to load chart data'}
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
   };
 
-  const chartData = data.trends.map((item: any) => ({
+  const chartData = data.trends.map((item) => ({
     ...item,
     date: formatDate(item.timestamp),
     responseTime: Math.round(item.value * 10) / 10,

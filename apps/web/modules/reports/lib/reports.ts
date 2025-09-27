@@ -40,7 +40,7 @@ export interface ChartConfig {
 // BASE REPORT ABSTRACT CLASS
 // ============================================================================
 
-export abstract class BaseReport {
+export abstract class BaseReport<T = unknown> {
   protected filters: ReportFilters;
   protected refreshInterval?: number;
 
@@ -52,7 +52,7 @@ export abstract class BaseReport {
   abstract getTitle(): string;
   abstract getDescription(): string;
   abstract getCategory(): 'operational' | 'performance' | 'business' | 'quality';
-  abstract fetchData(): Promise<any>;
+  abstract fetchData(): Promise<T>;
   abstract getChartConfig(): ChartConfig;
 
   // Helper methods
@@ -87,7 +87,7 @@ export interface OverviewMetrics {
   activeUsers: MetricValue;
 }
 
-export class OverviewDashboardReport extends BaseReport {
+export class OverviewDashboardReport extends BaseReport<OverviewMetrics> {
   getTitle(): string {
     return "Support Overview";
   }
@@ -180,7 +180,7 @@ export interface StatusDistribution {
   }[];
 }
 
-export class ConversationStatusReport extends BaseReport {
+export class ConversationStatusReport extends BaseReport<StatusDistribution> {
   getTitle(): string {
     return "Conversation Status Distribution";
   }
@@ -264,7 +264,7 @@ export interface AIHumanComparison {
   }[];
 }
 
-export class AIHumanComparisonReport extends BaseReport {
+export class AIHumanComparisonReport extends BaseReport<AIHumanComparison> {
   getTitle(): string {
     return "AI vs Human Agent Performance";
   }

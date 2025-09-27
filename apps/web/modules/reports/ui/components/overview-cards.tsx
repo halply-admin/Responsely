@@ -11,7 +11,7 @@ interface OverviewCardsProps {
 
 interface MetricCardProps {
   title: string;
-  icon: React.ComponentType<any>;
+  icon: React.ComponentType<{ className?: string }>;
   value: string;
   change?: number;
   trend?: 'up' | 'down' | 'stable';
@@ -151,8 +151,8 @@ export const OverviewCards = ({ filters }: OverviewCardsProps) => {
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-      {cards.map((card, index) => (
-        <MetricCard key={index} {...card} />
+      {cards.map((card) => (
+        <MetricCard key={card.title} {...card} />
       ))}
     </div>
   );

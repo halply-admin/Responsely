@@ -62,6 +62,9 @@ apps/web/modules/reports/
     └── views/
         └── reports-view.tsx          # Main dashboard layout
 
+apps/web/modules/billing/hooks/
+└── use-subscription-status.ts       # Subscription status hook
+
 packages/backend/convex/public/
 └── reports.ts                       # Backend data functions
 ```
@@ -76,13 +79,13 @@ packages/backend/convex/public/
 
 ### Paywall Control
 
-In `reports-view.tsx`, modify the subscription check:
+In `use-subscription-status.ts`, modify the subscription check:
 
 ```typescript
 const useSubscriptionStatus = () => {
   return {
-    isActive: true, // Set to false to test paywall
-    plan: 'pro',    // 'free', 'pro', 'enterprise'
+    isActive: false, // Set to false to test paywall
+    plan: 'free',    // 'free', 'pro', 'enterprise'
   };
 };
 ```
