@@ -2,6 +2,7 @@
 
 import {
   type LucideIcon,
+  BarChart3Icon,
   BookOpenIcon,
   BotIcon,
   GemIcon,
@@ -35,6 +36,11 @@ const features: Feature[] = [
     icon: BotIcon,
     label: "AI Customer Support",
     description: "Intelligent automated responses 24/7",
+  },
+  {
+    icon: BarChart3Icon,
+    label: "Advanced Reports & Analytics",
+    description: "Comprehensive dashboards and insights",
   },
   {
     icon: MicIcon,
