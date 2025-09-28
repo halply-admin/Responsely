@@ -1,6 +1,6 @@
 // Shared email types and constants
 
-export type EmailType = "welcome" | "escalation" | "summary" | "notification";
+export type EmailType = "welcome" | "escalation" | "summary" | "notification" | "customer-communication";
 
 export interface BaseEmailData {
   recipientEmail: string;

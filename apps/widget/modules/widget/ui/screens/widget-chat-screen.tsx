@@ -29,9 +29,9 @@ import {
   AIInputTools,
 } from "@workspace/ui/components/ai/input";
 import {
-  AIMessage,
-  AIMessageContent,
-} from "@workspace/ui/components/ai/message";
+  StyledAIMessage as AIMessage,
+  StyledAIMessageContent as AIMessageContent,
+} from "../components/styled-ai-components";
 import { AIResponse } from "@workspace/ui/components/ai/response";
 import { useMemo } from "react";
 
@@ -148,7 +148,7 @@ export const WidgetChatScreen = () => {
                 from={message.role === "user" ? "user" : "assistant"}
                 key={message.id}
               >
-                <AIMessageContent>
+                <AIMessageContent from={message.role === "user" ? "user" : "assistant"}>
                   <AIResponse>{message.content}</AIResponse>
                 </AIMessageContent>
                 {message.role === "assistant" && (

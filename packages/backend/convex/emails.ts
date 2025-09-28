@@ -1,5 +1,5 @@
 // packages/backend/convex/emails.ts
-import { internalAction, internalMutation, internalQuery, query } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, query, action } from "./_generated/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { Resend, vOnEmailEventArgs } from "@convex-dev/resend";
@@ -13,6 +13,10 @@ import {
   escalationEmailSubject
 } from "./emails/templates/escalation";
 import {
+  customerCommunicationEmailTemplate,
+  customerCommunicationEmailSubject
+} from "./emails/templates/customer-communication";
+import {
   getEmailConfig,
   formatEmailAddress,
   getTrackingHeaders,
@@ -20,6 +24,17 @@ import {
   truncateText
 } from "./emails/utils";
 import { EMAIL_CONSTANTS } from "./emails/types";
+import { createClerkClient } from "@clerk/backend";
+import { supportAgent } from "./system/ai/agents/supportAgent";
+
+// Add Clerk client (if not already present)
+const clerkSecretKey = process.env.CLERK_SECRET_KEY;
+if (!clerkSecretKey) {
+  throw new Error("CLERK_SECRET_KEY environment variable is not set.");
+}
+const clerkClient = createClerkClient({
+  secretKey: clerkSecretKey,
+});
 
 /**
  * The Resend instance uses `testMode` in development, which simulates email sending
@@ -231,6 +246,110 @@ export const sendEscalationEmail = internalAction({
       console.log(`Finished sending escalation emails for conversation: ${args.conversationId}`);
     } catch (error) {
       console.error("Critical error in sendEscalationEmail action:", error);
+      throw error;
+    }
+  },
+});
+
+// Send email to customer from support team
+export const sendCustomerEmail = action({
+  args: {
+    conversationId: v.string(),
+    organizationId: v.string(),
+    customerEmail: v.string(),
+    customerName: v.string(),
+    subject: v.string(),
+    message: v.string(),
+    senderUserId: v.string(),
+  },
+  handler: async (ctx, args) => {
+    try {
+      // Get sender information from Clerk
+      let senderName = "Support Team";
+      let fromEmail = "";
+      
+      try {
+        // Get sender user details
+        const senderUser = await clerkClient.users.getUser(args.senderUserId);
+        senderName = senderUser.firstName 
+          ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim()
+          : senderUser.emailAddresses[0]?.emailAddress || "Support Team";
+
+        // Get organization details for from email
+        const orgMemberships = await clerkClient.users.getOrganizationMembershipList({
+          userId: args.senderUserId,
+        });
+        
+        const currentOrgMembership = orgMemberships.data.find(
+          membership => membership.organization.id === args.organizationId
+        );
+
+        if (currentOrgMembership?.organization) {
+          // Use organization email if available, otherwise fall back to user email
+          fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
+        }
+      } catch (clerkError) {
+        console.error("Failed to get sender details from Clerk:", clerkError);
+        // Continue with defaults
+      }
+
+      // Get email settings for organization
+      const emailSettings = await ctx.runQuery(internal.emails.getEmailSettings, {
+        organizationId: args.organizationId,
+      });
+
+      // Configure email
+      const emailConfig = getEmailConfig({
+        fromName: senderName,
+        fromEmail: emailSettings?.fromEmail || fromEmail,
+      });
+
+      // Sanitize inputs
+      const sanitizedCustomerName = sanitizeForEmail(args.customerName);
+      const sanitizedSenderName = sanitizeForEmail(senderName);
+      const sanitizedSubject = sanitizeForEmail(args.subject);
+      const sanitizedMessage = sanitizeForEmail(args.message);
+
+      const emailId = await resend.sendEmail(ctx, {
+        from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
+        to: args.customerEmail,
+        subject: customerCommunicationEmailSubject(sanitizedSubject),
+        html: customerCommunicationEmailTemplate({
+          customerName: sanitizedCustomerName,
+          senderName: sanitizedSenderName,
+          subject: sanitizedSubject,
+          message: sanitizedMessage,
+          conversationId: args.conversationId,
+          dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
+        }),
+        headers: getTrackingHeaders(args.conversationId, "customer-communication"),
+      });
+
+      const emailIdString = String(emailId);
+      console.log(`Customer email sent. Resend ID: ${emailIdString}`);
+
+      // Log the email
+      await ctx.runMutation(internal.emails.logEmailSent, {
+        emailId: emailIdString,
+        organizationId: args.organizationId,
+        emailType: "customer-communication",
+        recipientEmail: args.customerEmail,
+      });
+
+      return emailIdString;
+    } catch (error) {
+      console.error("Failed to send customer email:", error);
+      const errorMessage = error instanceof Error ? error.stack || error.message : "Unknown error";
+      
+      // Log the failed attempt
+      await ctx.runMutation(internal.emails.logEmailSent, {
+        emailId: "failed",
+        organizationId: args.organizationId,
+        emailType: "customer-communication",
+        recipientEmail: args.customerEmail,
+        errorMessage,
+      });
+      
       throw error;
     }
   },

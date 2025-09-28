@@ -1,12 +1,17 @@
-import { useSetAtom } from "jotai"
-import { ArrowLeftIcon, Mic, MicIcon, MicOffIcon } from "lucide-react"
-import { screenAtom } from "../../atoms/widget-atoms"
-import { useVapi } from "../../hooks/use-vapi"
-import { WidgetHeader } from "../components/widget-header"
-import { Button } from "@workspace/ui/components/button"
-import { cn } from "@workspace/ui/lib/utils"
-import { AIConversation, AIConversationContent, AIConversationScrollButton } from "@workspace/ui/components/ai/conversation"
-import { AIMessage, AIMessageContent } from "@workspace/ui/components/ai/message"
+import { Button } from "@workspace/ui/components/button";
+import { ArrowLeftIcon, MicIcon, MicOffIcon, PhoneIcon } from "lucide-react";
+import { useSetAtom } from "jotai";
+import { screenAtom } from "../../atoms/widget-atoms";
+import { WidgetHeader } from "../components/widget-header";
+import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
+import { useVapi } from "../../hooks/use-vapi";
+import { cn } from "@workspace/ui/lib/utils";
+import { AIConversation, AIConversationContent, AIConversationScrollButton } from "@workspace/ui/components/ai/conversation";
+import { 
+  StyledAIMessage as AIMessage, 
+  StyledAIMessageContent as AIMessageContent 
+} from "../components/styled-ai-components";
+import { AIResponse } from "@workspace/ui/components/ai/response";
 
 export const WidgetVoiceScreen = () => {
   const setScreen = useSetAtom(screenAtom)
@@ -42,7 +47,7 @@ export const WidgetVoiceScreen = () => {
                 from={message.role}
                 key={`${message.role}-${index}-${message.text}`}
               >
-                <AIMessageContent>
+                <AIMessageContent from={message.role}>
                   {message.text}
                 </AIMessageContent>
               </AIMessage>
@@ -69,31 +74,30 @@ export const WidgetVoiceScreen = () => {
               </span>
             </div>
           )}
-          <div className="flex w-full justify-center">
-            {isConnected ? (
-              <Button
-                className="w-full"
-                disabled={isConnecting}
-                size="lg"
-                variant="destructive"
-                onClick={() => endCall()}
-              >
-                <MicOffIcon />
-                End Call
-              </Button>
-            ) : (
-              <Button
-                className="w-full"
-                disabled={isConnecting}
-                size="lg"
-                onClick={() => startCall()}
-              >
-                <MicIcon />
-                Start Call
-              </Button>
-            )}
-          </div>
         </div>
+      </div>
+
+      <div className="flex items-center justify-center gap-x-2 p-4">
+        {!isConnected ? (
+          <Button
+            className="w-full"
+            onClick={() => startCall()}
+            size="lg"
+          >
+            <MicIcon />
+            Start Voice Chat
+          </Button>
+        ) : (
+          <Button
+            className="w-full"
+            onClick={() => endCall()}
+            size="lg"
+            variant="destructive"
+          >
+            <MicOffIcon />
+            End Call
+          </Button>
+        )}
       </div>
     </>
   )
