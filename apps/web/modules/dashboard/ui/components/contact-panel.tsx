@@ -16,7 +16,7 @@ import { useQuery } from "convex/react";
 import { ClockIcon, GlobeIcon, MailIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { generateMailtoLink } from "@/lib/email-utils";
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react";
 
@@ -84,6 +84,26 @@ export const ContactPanel = () => {
   const countryInfo = useMemo(() => {
     return getCountryFromTimezone(contactSession?.metadata?.timezone);
   }, [contactSession?.metadata?.timezone]);
+
+  const handleSendEmail = useCallback(() => {
+    if (!contactSession) return;
+    
+    const uiMessages = toUIMessages(messages.results ?? []);
+    const conversationMessages = (uiMessages || [])
+      .filter(msg => msg.role === "user" || msg.role === "assistant")
+      .map(msg => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content
+      }));
+    
+    const mailtoLink = generateMailtoLink(
+      contactSession.email,
+      contactSession.name || "Customer",
+      conversationMessages
+    );
+    window.location.href = mailtoLink;
+  }, [contactSession, messages.results]);
 
   const accordionSections = useMemo<InfoSection[]>(() => {
     if (!contactSession?.metadata) {
@@ -214,23 +234,7 @@ export const ContactPanel = () => {
         </div>
         {conversation && contactSession && (
           <Button
-            onClick={() => {
-              const uiMessages = toUIMessages(messages.results ?? []);
-              const conversationMessages = (uiMessages || [])
-                .filter(msg => msg.role === "user" || msg.role === "assistant")
-                .map(msg => ({
-                  id: msg.id,
-                  role: msg.role as "user" | "assistant",
-                  content: msg.content
-                }));
-              
-              const mailtoLink = generateMailtoLink(
-                contactSession.email,
-                contactSession.name || "Customer",
-                conversationMessages
-              );
-              window.location.href = mailtoLink;
-            }}
+            onClick={handleSendEmail}
             className="w-full"
             size="lg"
           >
