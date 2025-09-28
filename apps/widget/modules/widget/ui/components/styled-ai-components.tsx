@@ -54,7 +54,7 @@ export const StyledAIMessageContent = ({
     <div
       className={cn(
         "break-words",
-        "flex flex-col gap-2 rounded-lg border px-3 py-2 text-sm",
+        "flex flex-col gap-2 rounded-lg border px-3 py-2 text-base", // Changed from text-sm to text-base for better readability
         // Use CSS classes for better performance and consistency
         isUserMessage ? "widget-primary-bg text-white border-transparent" : "bg-background text-foreground border-border",
         className

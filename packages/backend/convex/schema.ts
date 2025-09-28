@@ -11,6 +11,7 @@ export default defineSchema({
     userId: v.optional(v.string()),
     organizationId: v.optional(v.string()),
     emailType: v.string(), // "welcome", "escalation", "summary"
+    recipientEmail: v.optional(v.string()), // Made optional to handle existing records
     event: v.string(), // "sent", "delivered", "bounced", "failed", "opened", "clicked"
     timestamp: v.number(),
     metadata: v.optional(v.any()), // Store email details, conversation ID, etc.

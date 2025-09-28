@@ -10,6 +10,7 @@
 
 import type * as constants from "../constants.js";
 import type * as emails_index from "../emails/index.js";
+import type * as emails_templates_customerCommunication from "../emails/templates/customerCommunication.js";
 import type * as emails_templates_escalation from "../emails/templates/escalation.js";
 import type * as emails_templates_welcome from "../emails/templates/welcome.js";
 import type * as emails_types from "../emails/types.js";
@@ -64,6 +65,7 @@ import type {
 declare const fullApi: ApiFromModules<{
   constants: typeof constants;
   "emails/index": typeof emails_index;
+  "emails/templates/customerCommunication": typeof emails_templates_customerCommunication;
   "emails/templates/escalation": typeof emails_templates_escalation;
   "emails/templates/welcome": typeof emails_templates_welcome;
   "emails/types": typeof emails_types;

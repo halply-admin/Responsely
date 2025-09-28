@@ -17,6 +17,7 @@ import { ClockIcon, GlobeIcon, MailIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
+import { SendEmailDialog } from "./send-email-dialog";
 
 type InfoItem = {
   label: string;
@@ -34,6 +35,12 @@ type InfoSection = {
 export const ContactPanel = () => {
   const params = useParams();
   const conversationId = params.conversationId as (Id<"conversations"> | null);
+
+  const conversation = useQuery(api.private.conversations.getOne, 
+    conversationId ? {
+      conversationId,
+    } : "skip",
+  );
 
   const contactSession = useQuery(api.private.contactSessions.getOneByConversationId, 
     conversationId ? {
@@ -197,12 +204,12 @@ export const ContactPanel = () => {
             </p>
           </div>
         </div>
-        <Button asChild className="w-full" size="lg">
-          <Link href={`mailto:${contactSession.email}`}>
-            <MailIcon />
-            <span>Send Email</span>
-          </Link>
-        </Button>
+        {conversation && contactSession && (
+          <SendEmailDialog 
+            conversation={conversation}
+            contactSession={contactSession}
+          />
+        )}
       </div>
 
       <div>
