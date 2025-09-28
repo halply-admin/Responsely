@@ -136,7 +136,22 @@ Support Team`,
                 <strong>To:</strong> {contactSession.email}
               </div>
               <div className="text-sm text-muted-foreground">
-                <strong>From:</strong> {user?.primaryEmailAddress?.emailAddress || "Your organization email"}
+                <strong>From:</strong> {(() => {
+                  const userEmail = user?.primaryEmailAddress?.emailAddress;
+                  if (!userEmail) return "Your organization email";
+                  
+                  // Check if it's an unverified domain
+                  const unverifiedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+                  const emailParts = userEmail.split('@');
+                  const domain = emailParts[1];
+                  
+                  if (domain && unverifiedDomains.includes(domain)) {
+                    const username = emailParts[0];
+                    return `${username}@resend.dev (verified domain)`;
+                  }
+                  
+                  return userEmail;
+                })()}
               </div>
             </div>
 

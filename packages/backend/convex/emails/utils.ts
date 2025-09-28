@@ -11,13 +11,36 @@ export const formatEmailAddress = (email: string, name?: string): string => {
 /**
  * Get email configuration with fallbacks
  */
-export const getEmailConfig = (
-  customConfig?: Partial<EmailConfig>
-): EmailConfig => {
+export const getEmailConfig = (overrides?: {
+  fromName?: string;
+  fromEmail?: string;
+  replyToEmail?: string;
+}) => {
+  const defaultFromName = DEFAULT_EMAIL_CONFIG.fromName;
+  const defaultFromEmail = DEFAULT_EMAIL_CONFIG.fromEmail;
+
+  // Use Resend's default domain for unverified domains
+  const getVerifiedFromEmail = (email?: string) => {
+    if (!email) return defaultFromEmail;
+    
+    // Check if it's a common unverified domain
+    const unverifiedDomains = ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'];
+    const emailParts = email.split('@');
+    const domain = emailParts[1];
+    
+    if (domain && unverifiedDomains.includes(domain)) {
+      // Use Resend's default domain but keep the user's name
+      const username = emailParts[0];
+      return `${username}@resend.dev`; // Resend's default domain
+    }
+    
+    return email;
+  };
+
   return {
-    fromName: customConfig?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName,
-    fromEmail: customConfig?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail,
-    replyToEmail: customConfig?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
+    fromName: overrides?.fromName || defaultFromName,
+    fromEmail: getVerifiedFromEmail(overrides?.fromEmail),
+    replyToEmail: overrides?.replyToEmail,
   };
 };
 
