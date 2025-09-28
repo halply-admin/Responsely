@@ -5,7 +5,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { useAction } from "convex/react";
-import { useAuth } from "@clerk/nextjs";
+import { useAuth, useUser } from "@clerk/nextjs";
 import { toast } from "sonner";
 
 import {
@@ -53,6 +53,7 @@ export const SendEmailDialog = ({
   const [open, setOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { userId, orgId } = useAuth();
+  const { user } = useUser();
   
   const sendCustomerEmail = useAction(api.emails.sendCustomerEmail);
 
@@ -135,7 +136,7 @@ Support Team`,
                 <strong>To:</strong> {contactSession.email}
               </div>
               <div className="text-sm text-muted-foreground">
-                <strong>From:</strong> Your organization email
+                <strong>From:</strong> {user?.primaryEmailAddress?.emailAddress || "Your organization email"}
               </div>
             </div>
 
