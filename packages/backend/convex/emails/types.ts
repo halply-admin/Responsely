@@ -24,5 +24,4 @@ export const EMAIL_CONSTANTS = {
   DASHBOARD_URL: "https://responsely.com/dashboard",
   SUPPORT_URL: "https://responsely.com/support",
   UNSUBSCRIBE_URL: "https://responsely.com/unsubscribe",
-  UNVERIFIED_DOMAINS: ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'] as const,
 } as const; 

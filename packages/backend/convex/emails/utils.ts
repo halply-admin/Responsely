@@ -1,4 +1,4 @@
-import { EmailConfig, DEFAULT_EMAIL_CONFIG, EmailType, EMAIL_CONSTANTS } from "./types";
+import { EmailConfig, DEFAULT_EMAIL_CONFIG, EmailType } from "./types";
 
 /**
  * Format email address with name
@@ -19,27 +19,9 @@ export const getEmailConfig = (overrides?: {
   const defaultFromName = DEFAULT_EMAIL_CONFIG.fromName;
   const defaultFromEmail = DEFAULT_EMAIL_CONFIG.fromEmail;
 
-  // Use Resend's default domain for unverified domains
-  const getVerifiedFromEmail = (email?: string) => {
-    if (!email) return defaultFromEmail;
-    
-    // Check if it's a common unverified domain
-    const unverifiedDomains = EMAIL_CONSTANTS.UNVERIFIED_DOMAINS;
-    const emailParts = email.split('@');
-    const domain = emailParts[1];
-    
-    if (domain && (unverifiedDomains as readonly string[]).includes(domain)) {
-      // Use Resend's default domain but keep the user's name
-      const username = emailParts[0];
-      return `${username}@resend.dev`; // Resend's default domain
-    }
-    
-    return email;
-  };
-
   return {
     fromName: overrides?.fromName || defaultFromName,
-    fromEmail: getVerifiedFromEmail(overrides?.fromEmail),
+    fromEmail: overrides?.fromEmail || defaultFromEmail,
     replyToEmail: overrides?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
   };
 };

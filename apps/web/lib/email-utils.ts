@@ -1,8 +1,5 @@
 // Email utility functions for the frontend
 
-// Import shared constants from backend
-import { EMAIL_CONSTANTS } from "@workspace/backend/emails/types";
-
 // Email generation constants
 const SUBJECT_MAX_LENGTH = 50;
 const ASSISTANT_SENDER_NAME = "Support";
@@ -11,20 +8,10 @@ const HISTORY_TRUNCATION_MESSAGE = "\n\n[Conversation history truncated for emai
 
 /**
  * Get the display email address for the "From" field in the UI
- * Shows what email will actually be used when sending
+ * Shows the user's actual email since mailto uses their email client
  */
 export const getDisplayFromEmail = (userEmail?: string): string => {
-  if (!userEmail) return "Your organization email";
-  
-  const emailParts = userEmail.split('@');
-  const domain = emailParts[1];
-  
-  if (domain && (EMAIL_CONSTANTS.UNVERIFIED_DOMAINS as readonly string[]).includes(domain)) {
-    const username = emailParts[0];
-    return `${username}@resend.dev (verified domain)`;
-  }
-  
-  return userEmail;
+  return userEmail || "Your email address";
 };
 
 /**

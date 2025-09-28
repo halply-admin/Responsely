@@ -89,7 +89,7 @@ export const ContactPanel = () => {
     if (!contactSession) return;
     
     const uiMessages = toUIMessages(messages.results ?? []);
-    const conversationMessages = (uiMessages || [])
+    const conversationMessages = uiMessages
       .filter(msg => msg.role === "user" || msg.role === "assistant")
       .map(msg => ({
         id: msg.id,
