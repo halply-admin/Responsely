@@ -15,7 +15,7 @@ import {
 import {
   customerCommunicationEmailTemplate,
   customerCommunicationEmailSubject
-} from "./emails/templates/customer-communication";
+} from "./emails/templates/customerCommunication";
 import {
   getEmailConfig,
   formatEmailAddress,
@@ -27,11 +27,7 @@ import { EMAIL_CONSTANTS } from "./emails/types";
 import { createClerkClient } from "@clerk/backend";
 import { supportAgent } from "./system/ai/agents/supportAgent";
 
-// Rate limiting constants
-const MAX_EMAILS_PER_HOUR_PER_RECIPIENT = 5;
-const RATE_LIMIT_WINDOW_HOURS = 1;
-
-// Add Clerk client (if not already present)
+// Add Clerk client
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
 if (!clerkSecretKey) {
   throw new Error("CLERK_SECRET_KEY environment variable is not set.");
@@ -68,7 +64,7 @@ export const logEmailSent = internalMutation({
       userId: args.userId,
       organizationId: args.organizationId,
       emailType: args.emailType,
-      recipientEmail: args.recipientEmail,
+      recipientEmail: args.recipientEmail || "unknown@example.com",
       event: args.errorMessage ? "failed" : "sent",
       timestamp: Date.now(),
       errorMessage: args.errorMessage,
@@ -89,30 +85,6 @@ export const getEmailSettings = internalQuery({
   },
 });
 
-export const getRecentEmailsForRecipient = internalQuery({
-  args: { 
-    recipientEmail: v.string(),
-    emailType: v.string(),
-    hoursBack: v.number()
-  },
-  handler: async (ctx, args) => {
-    const cutoffTime = Date.now() - (args.hoursBack * 60 * 60 * 1000);
-
-    return await ctx.db
-      .query("emailLogs")
-      .withIndex("by_type_and_recipient", (q) => 
-        q.eq("emailType", args.emailType).eq("recipientEmail", args.recipientEmail)
-      )
-      .filter((q) => 
-        q.and(
-          q.gt(q.field("timestamp"), cutoffTime),
-          q.eq(q.field("event"), "sent") // Only count successfully sent emails
-        )
-      )
-      .collect();
-  },
-});
-
 // -----------------------------
 // Webhook / event handler
 // -----------------------------
@@ -123,10 +95,14 @@ export const handleEmailEvent = internalMutation({
     try {
       const emailIdString = String(args.id);
       const emailType = (args.event.data && (args.event.data as any).email_type) ?? "unknown";
+      
+      // Extract recipient email from event data
+      const recipientEmail = (args.event.data && (args.event.data as any).to) ?? "unknown@example.com";
 
       await ctx.db.insert("emailLogs", {
         emailId: emailIdString,
         emailType: String(emailType),
+        recipientEmail: String(recipientEmail),
         event: args.event.type,
         timestamp: Date.now(),
         metadata: {
@@ -292,107 +268,81 @@ export const sendCustomerEmail = action({
     senderUserId: v.string(),
   },
   handler: async (ctx, args) => {
+    // Get sender information from Clerk
+    let senderName = "Support Team";
+    let fromEmail = "";
+    
     try {
-      // Rate limiting: Check if we've sent too many emails to this recipient recently
-      // Note: In actions, we need to use runQuery instead of direct db access
-      const recentEmailsQuery = await ctx.runQuery(internal.emails.getRecentEmailsForRecipient, {
-        recipientEmail: args.customerEmail,
-        emailType: "customer-communication",
-        hoursBack: RATE_LIMIT_WINDOW_HOURS
-      });
+      // Get sender user details
+      const senderUser = await clerkClient.users.getUser(args.senderUserId);
+      senderName = senderUser.firstName 
+        ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim()
+        : senderUser.emailAddresses[0]?.emailAddress || "Support Team";
 
-      if (recentEmailsQuery.length >= MAX_EMAILS_PER_HOUR_PER_RECIPIENT) {
-        throw new Error(`Rate limit exceeded: Too many emails sent to ${args.customerEmail} recently`);
+      // Get organization details for from email
+      const orgMemberships = await clerkClient.users.getOrganizationMembershipList({
+        userId: args.senderUserId,
+      });
+      
+      const currentOrgMembership = orgMemberships.data.find(
+        membership => membership.organization.id === args.organizationId
+      );
+
+      if (currentOrgMembership?.organization) {
+        // This is a fallback. The user's email will be used if no organization-level 'from' email is set.
+        fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
       }
-
-      // Get sender information from Clerk
-      let senderName = "Support Team";
-      let fromEmail = "";
-      
-      try {
-        // Get sender user details
-        const senderUser = await clerkClient.users.getUser(args.senderUserId);
-        senderName = senderUser.firstName 
-          ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim()
-          : senderUser.emailAddresses[0]?.emailAddress || "Support Team";
-
-        // Get organization details for from email
-        const orgMemberships = await clerkClient.users.getOrganizationMembershipList({
-          userId: args.senderUserId,
-        });
-        
-        const currentOrgMembership = orgMemberships.data.find(
-          membership => membership.organization.id === args.organizationId
-        );
-
-        if (currentOrgMembership?.organization) {
-          // This is a fallback. The user's email will be used if no organization-level 'from' email is set.
-          fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
-        }
-      } catch (clerkError) {
-        console.error("Failed to get sender details from Clerk:", clerkError);
-        // Continue with defaults
-      }
-
-      // Get email settings for organization
-      const emailSettings = await ctx.runQuery(internal.emails.getEmailSettings, {
-        organizationId: args.organizationId,
-      });
-
-      // Configure email
-      const emailConfig = getEmailConfig({
-        fromName: senderName,
-        fromEmail: emailSettings?.fromEmail || fromEmail,
-      });
-
-      // Sanitize inputs
-      const sanitizedCustomerName = sanitizeForEmail(args.customerName);
-      const sanitizedSenderName = sanitizeForEmail(senderName);
-      const sanitizedSubject = sanitizeForEmail(args.subject);
-      const sanitizedMessage = sanitizeForEmail(args.message);
-
-      const emailId = await resend.sendEmail(ctx, {
-        from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
-        to: args.customerEmail,
-        subject: customerCommunicationEmailSubject(sanitizedSubject),
-        html: customerCommunicationEmailTemplate({
-          customerName: sanitizedCustomerName,
-          senderName: sanitizedSenderName,
-          subject: sanitizedSubject,
-          message: sanitizedMessage,
-          conversationId: args.conversationId,
-          dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
-        }),
-        headers: getTrackingHeaders(args.conversationId, "customer-communication"),
-      });
-
-      const emailIdString = String(emailId);
-      console.log(`Customer email sent. Resend ID: ${emailIdString}`);
-
-      // Log the email
-      await ctx.runMutation(internal.emails.logEmailSent, {
-        emailId: emailIdString,
-        organizationId: args.organizationId,
-        emailType: "customer-communication",
-        recipientEmail: args.customerEmail,
-      });
-
-      return emailIdString;
-    } catch (error) {
-      console.error("Failed to send customer email:", error);
-      const errorMessage = error instanceof Error ? error.stack || error.message : "Unknown error";
-      
-      // Log the failed attempt
-      await ctx.runMutation(internal.emails.logEmailSent, {
-        emailId: "failed",
-        organizationId: args.organizationId,
-        emailType: "customer-communication",
-        recipientEmail: args.customerEmail,
-        errorMessage,
-      });
-      
-      throw error;
+    } catch (clerkError) {
+      console.error("Failed to get sender details from Clerk:", clerkError);
+      // Continue with defaults - the component will handle any email sending errors
     }
+
+    // Get email settings for organization
+    const emailSettings = await ctx.runQuery(internal.emails.getEmailSettings, {
+      organizationId: args.organizationId,
+    });
+
+    // Configure email
+    const fromEmailForConfig = emailSettings?.fromEmail || fromEmail;
+    const emailConfig = getEmailConfig({
+      fromName: senderName,
+      fromEmail: fromEmailForConfig ? fromEmailForConfig : undefined,
+    });
+
+    // Sanitize inputs
+    const sanitizedCustomerName = sanitizeForEmail(args.customerName);
+    const sanitizedSenderName = sanitizeForEmail(senderName);
+    const sanitizedSubject = sanitizeForEmail(args.subject);
+    const sanitizedMessage = sanitizeForEmail(args.message);
+
+    // Send email - the Convex Resend component handles retries, rate limiting, and durable execution
+    const emailId = await resend.sendEmail(ctx, {
+      from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
+      to: args.customerEmail,
+      subject: customerCommunicationEmailSubject(sanitizedSubject),
+      html: customerCommunicationEmailTemplate({
+        customerName: sanitizedCustomerName,
+        senderName: sanitizedSenderName,
+        subject: sanitizedSubject,
+        message: sanitizedMessage,
+        conversationId: args.conversationId,
+        dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
+      }),
+      headers: getTrackingHeaders(args.conversationId, "customer-communication"),
+    });
+
+    const emailIdString = String(emailId);
+    console.log(`Customer email sent. Resend ID: ${emailIdString}`);
+
+    // Log the email for business analytics
+    await ctx.runMutation(internal.emails.logEmailSent, {
+      emailId: emailIdString,
+      organizationId: args.organizationId,
+      emailType: "customer-communication",
+      recipientEmail: args.customerEmail,
+    });
+
+    return emailIdString;
   },
 });
 

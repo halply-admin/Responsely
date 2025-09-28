@@ -11,7 +11,7 @@ export default defineSchema({
     userId: v.optional(v.string()),
     organizationId: v.optional(v.string()),
     emailType: v.string(), // "welcome", "escalation", "summary"
-    recipientEmail: v.string(), // Moved from metadata for better indexing
+    recipientEmail: v.optional(v.string()), // Made optional to handle existing records
     event: v.string(), // "sent", "delivered", "bounced", "failed", "opened", "clicked"
     timestamp: v.number(),
     metadata: v.optional(v.any()), // Store email details, conversation ID, etc.
@@ -21,9 +21,7 @@ export default defineSchema({
     .index("by_organization", ["organizationId"])
     .index("by_timestamp", ["timestamp"])
     .index("by_email_type", ["emailType"])
-    .index("by_event", ["event"])
-    .index("by_type_and_recipient", ["emailType", "recipientEmail"])
-    .index("by_recipient_and_timestamp", ["recipientEmail", "timestamp"]),
+    .index("by_event", ["event"]),
 
   // Email settings per organization
   emailSettings: defineTable({

@@ -64,17 +64,15 @@ export const SendEmailDialog = ({
     if (open) {
       form.reset({
         subject: `Re: Your support inquiry`,
-        message: [
-          `Hello ${contactSession.name || 'there'},`,
-          '',
-          'Thank you for reaching out to us.',
-          '',
-          'Best regards,',
-          'Support Team',
-        ].join('\n'),
+        message: `Hello ${contactSession.name || 'there'},
+
+Thank you for reaching out to us.
+
+Best regards,
+Support Team`,
       });
     }
-  }, [open, contactSession]);
+  }, [open, contactSession.name, form.reset]);
 
   const onSubmit = async (data: SendEmailFormData) => {
     if (!userId || !orgId) {
