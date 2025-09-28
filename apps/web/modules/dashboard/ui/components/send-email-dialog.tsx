@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -60,8 +60,8 @@ export const SendEmailDialog = ({
     resolver: zodResolver(sendEmailSchema),
   });
 
-  useEffect(() => {
-    if (open) {
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen) {
       form.reset({
         subject: `Re: Your support inquiry`,
         message: `Hello ${contactSession.name || 'there'},
@@ -72,7 +72,8 @@ Best regards,
 Support Team`,
       });
     }
-  }, [open, contactSession.name, form.reset]);
+    setOpen(isOpen);
+  };
 
   const onSubmit = async (data: SendEmailFormData) => {
     if (!userId || !orgId) {
@@ -110,7 +111,7 @@ Support Team`,
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogTrigger asChild>
         {children || (
           <Button className="w-full" size="lg">

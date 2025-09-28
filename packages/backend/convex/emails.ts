@@ -275,26 +275,32 @@ export const sendCustomerEmail = action({
     try {
       // Get sender user details
       const senderUser = await clerkClient.users.getUser(args.senderUserId);
-      senderName = senderUser.firstName 
-        ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim()
-        : senderUser.emailAddresses[0]?.emailAddress || "Support Team";
+      
+      // Build sender name with better readability
+      const userFullName = senderUser.firstName 
+        ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim() 
+        : null;
+      const userEmail = senderUser.emailAddresses[0]?.emailAddress;
+      senderName = userFullName || userEmail || "Support Team";
 
-      // Get organization details for from email
+      // Verify sender is a member of the organization - CRITICAL SECURITY CHECK
       const orgMemberships = await clerkClient.users.getOrganizationMembershipList({
         userId: args.senderUserId,
       });
-      
+
       const currentOrgMembership = orgMemberships.data.find(
         membership => membership.organization.id === args.organizationId
       );
 
-      if (currentOrgMembership?.organization) {
-        // This is a fallback. The user's email will be used if no organization-level 'from' email is set.
-        fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
+      if (!currentOrgMembership) {
+        throw new Error("Unauthorized: Sender is not a member of the organization.");
       }
-    } catch (clerkError) {
-      console.error("Failed to get sender details from Clerk:", clerkError);
-      // Continue with defaults - the component will handle any email sending errors
+
+      // Set from email after authorization is confirmed
+      fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
+    } catch (error) {
+      console.error("Failed to verify sender details from Clerk:", error);
+      throw new Error("Failed to send email due to an authorization or verification issue.");
     }
 
     // Get email settings for organization
@@ -313,7 +319,7 @@ export const sendCustomerEmail = action({
     const sanitizedCustomerName = sanitizeForEmail(args.customerName);
     const sanitizedSenderName = sanitizeForEmail(senderName);
     const sanitizedSubject = sanitizeForEmail(args.subject);
-    const sanitizedMessage = sanitizeForEmail(args.message);
+    const sanitizedMessage = sanitizeForEmail(args.message).replace(/\n/g, "<br />");
 
     // Send email - the Convex Resend component handles retries, rate limiting, and durable execution
     const emailId = await resend.sendEmail(ctx, {
