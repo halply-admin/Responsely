@@ -11,13 +11,15 @@ export const formatEmailAddress = (email: string, name?: string): string => {
 /**
  * Get email configuration with fallbacks
  */
-export const getEmailConfig = (
-  customConfig?: Partial<EmailConfig>
-): EmailConfig => {
+export const getEmailConfig = (overrides?: {
+  fromName?: string;
+  fromEmail?: string;
+  replyToEmail?: string;
+}) => {
   return {
-    fromName: customConfig?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName,
-    fromEmail: customConfig?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail,
-    replyToEmail: customConfig?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
+    fromName: overrides?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName,
+    fromEmail: overrides?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail,
+    replyToEmail: overrides?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
   };
 };
 

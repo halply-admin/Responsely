@@ -75,15 +75,13 @@ export const welcomeEmailTemplate = (data: WelcomeEmailData): string => {
     <body>
       <div class="container">
         <div class="header">
-          <div class="logo">Responsely</div>
+          <div class="logo"></div>
         </div>
-        
-        <h1 class="title">Welcome to Responsely! 🎉</h1>
         
         <div class="content">
           <p>Hi ${data.userName},</p>
           
-          <p>We're excited to have you on board! Your customer support AI is ready to help you provide amazing customer experiences.</p>
+          <p>We're excited to have you on board! Your customer support AI is ready to help you save time and provide a great customer experience.</p>
           
           <p>Get started by exploring your dashboard where you can:</p>
           <ul>
