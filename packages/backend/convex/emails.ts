@@ -21,12 +21,15 @@ import {
   formatEmailAddress,
   getTrackingHeaders,
   sanitizeForEmail,
-  truncateText,
-  generateIdempotencyKey
+  truncateText
 } from "./emails/utils";
 import { EMAIL_CONSTANTS } from "./emails/types";
 import { createClerkClient } from "@clerk/backend";
 import { supportAgent } from "./system/ai/agents/supportAgent";
+
+// Rate limiting constants
+const MAX_EMAILS_PER_HOUR_PER_RECIPIENT = 5;
+const RATE_LIMIT_WINDOW_HOURS = 1;
 
 // Add Clerk client (if not already present)
 const clerkSecretKey = process.env.CLERK_SECRET_KEY;
@@ -293,10 +296,10 @@ export const sendCustomerEmail = action({
       const recentEmailsQuery = await ctx.runQuery(internal.emails.getRecentEmailsForRecipient, {
         recipientEmail: args.customerEmail,
         emailType: "customer-communication",
-        hoursBack: 1
+        hoursBack: RATE_LIMIT_WINDOW_HOURS
       });
 
-      if (recentEmailsQuery.length >= 5) { // Max 5 emails per hour per recipient
+      if (recentEmailsQuery.length >= MAX_EMAILS_PER_HOUR_PER_RECIPIENT) {
         throw new Error(`Rate limit exceeded: Too many emails sent to ${args.customerEmail} recently`);
       }
 
@@ -346,12 +349,6 @@ export const sendCustomerEmail = action({
       const sanitizedSubject = sanitizeForEmail(args.subject);
       const sanitizedMessage = sanitizeForEmail(args.message);
 
-      const idempotencyKey = generateIdempotencyKey(
-        "customer-communication",
-        args.customerEmail,
-        args.conversationId
-      );
-
       const emailId = await resend.sendEmail(ctx, {
         from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
         to: args.customerEmail,
@@ -365,7 +362,6 @@ export const sendCustomerEmail = action({
           dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
         }),
         headers: getTrackingHeaders(args.conversationId, "customer-communication"),
-        idempotencyKey,
       });
 
       const emailIdString = String(emailId);

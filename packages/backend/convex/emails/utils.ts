@@ -1,5 +1,8 @@
 import { EmailConfig, DEFAULT_EMAIL_CONFIG, EmailType } from "./types";
 
+// Idempotency key window in milliseconds (5 minutes)
+const IDEMPOTENCY_KEY_WINDOW_MS = 5 * 60 * 1000;
+
 /**
  * Format email address with name
  */
@@ -72,7 +75,7 @@ export const generateIdempotencyKey = (
   timestamp?: number
 ): string => {
   const time = timestamp || Date.now();
-  const baseString = `${emailType}-${recipientEmail}-${entityId}-${Math.floor(time / (1000 * 60 * 5))}`; // 5-minute window
+  const baseString = `${emailType}-${recipientEmail}-${entityId}-${Math.floor(time / IDEMPOTENCY_KEY_WINDOW_MS)}`;
   
   // Simple hash function for consistent key generation
   let hash = 0;

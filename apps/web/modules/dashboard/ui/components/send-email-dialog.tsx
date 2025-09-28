@@ -61,18 +61,20 @@ export const SendEmailDialog = ({
   });
 
   useEffect(() => {
-    form.reset({
-      subject: `Re: Your support inquiry`,
-      message: [
-        `Hello ${contactSession.name || 'there'},`,
-        '',
-        'Thank you for reaching out to us.',
-        '',
-        'Best regards,',
-        'Support Team',
-      ].join('\n'),
-    });
-  }, [contactSession, form.reset]);
+    if (open) {
+      form.reset({
+        subject: `Re: Your support inquiry`,
+        message: [
+          `Hello ${contactSession.name || 'there'},`,
+          '',
+          'Thank you for reaching out to us.',
+          '',
+          'Best regards,',
+          'Support Team',
+        ].join('\n'),
+      });
+    }
+  }, [open, contactSession, form.reset]);
 
   const onSubmit = async (data: SendEmailFormData) => {
     if (!userId || !orgId) {
