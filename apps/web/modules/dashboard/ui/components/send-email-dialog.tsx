@@ -74,7 +74,7 @@ export const SendEmailDialog = ({
         ].join('\n'),
       });
     }
-  }, [open, contactSession, form.reset]);
+  }, [open, contactSession]);
 
   const onSubmit = async (data: SendEmailFormData) => {
     if (!userId || !orgId) {

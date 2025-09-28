@@ -1,8 +1,5 @@
 import { EmailConfig, DEFAULT_EMAIL_CONFIG, EmailType } from "./types";
 
-// Idempotency key window in milliseconds (5 minutes)
-const IDEMPOTENCY_KEY_WINDOW_MS = 5 * 60 * 1000;
-
 /**
  * Format email address with name
  */
@@ -62,28 +59,4 @@ export const getTrackingHeaders = (
     { name: "X-Email-Type", value: emailType },
     { name: "X-Mailer", value: "Responsely" },
   ];
-};
-
-/**
- * Generate idempotency key for email sending
- * This helps prevent duplicate emails when retries occur
- */
-export const generateIdempotencyKey = (
-  emailType: EmailType,
-  recipientEmail: string,
-  entityId: string,
-  timestamp?: number
-): string => {
-  const time = timestamp || Date.now();
-  const baseString = `${emailType}-${recipientEmail}-${entityId}-${Math.floor(time / IDEMPOTENCY_KEY_WINDOW_MS)}`;
-  
-  // Simple hash function for consistent key generation
-  let hash = 0;
-  for (let i = 0; i < baseString.length; i++) {
-    const char = baseString.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  
-  return `resp-${Math.abs(hash).toString(36)}`;
 }; 

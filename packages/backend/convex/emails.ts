@@ -68,11 +68,12 @@ export const logEmailSent = internalMutation({
       userId: args.userId,
       organizationId: args.organizationId,
       emailType: args.emailType,
+      recipientEmail: args.recipientEmail,
       event: args.errorMessage ? "failed" : "sent",
       timestamp: Date.now(),
+      errorMessage: args.errorMessage,
       metadata: {
-        recipientEmail: args.recipientEmail,
-        errorMessage: args.errorMessage,
+        // Keep other metadata here if needed in the future
       },
     });
   },
@@ -96,13 +97,14 @@ export const getRecentEmailsForRecipient = internalQuery({
   },
   handler: async (ctx, args) => {
     const cutoffTime = Date.now() - (args.hoursBack * 60 * 60 * 1000);
-    
+
     return await ctx.db
       .query("emailLogs")
-      .withIndex("by_email_type", (q) => q.eq("emailType", args.emailType))
+      .withIndex("by_type_and_recipient", (q) => 
+        q.eq("emailType", args.emailType).eq("recipientEmail", args.recipientEmail)
+      )
       .filter((q) => 
         q.and(
-          q.eq(q.field("metadata.recipientEmail"), args.recipientEmail),
           q.gt(q.field("timestamp"), cutoffTime),
           q.eq(q.field("event"), "sent") // Only count successfully sent emails
         )
