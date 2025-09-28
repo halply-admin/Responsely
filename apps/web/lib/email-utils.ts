@@ -57,7 +57,15 @@ export const generateMailtoLink = (
   // Truncate history if it's too long for mailto links
   if (conversationHistory.length > MAILTO_BODY_MAX_LENGTH) {
     const truncationPoint = Math.max(0, MAILTO_BODY_MAX_LENGTH - HISTORY_TRUNCATION_MESSAGE.length);
-    conversationHistory = conversationHistory.substring(0, truncationPoint) + HISTORY_TRUNCATION_MESSAGE;
+    let truncatedHistory = conversationHistory.substring(0, truncationPoint);
+    
+    // Avoid cutting a word in the middle by truncating at the last space
+    const lastSpaceIndex = truncatedHistory.lastIndexOf(' ');
+    if (lastSpaceIndex > 0) {
+      truncatedHistory = truncatedHistory.substring(0, lastSpaceIndex);
+    }
+    
+    conversationHistory = truncatedHistory + HISTORY_TRUNCATION_MESSAGE;
   }
 
   const body = `Hi ${customerName},
