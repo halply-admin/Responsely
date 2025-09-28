@@ -17,7 +17,8 @@ import { ClockIcon, GlobeIcon, MailIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo } from "react";
-import { SendEmailDialog } from "./send-email-dialog";
+import { generateMailtoLink } from "@/lib/email-utils";
+import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react";
 
 type InfoItem = {
   label: string;
@@ -42,10 +43,17 @@ export const ContactPanel = () => {
     } : "skip",
   );
 
-  const contactSession = useQuery(api.private.contactSessions.getOneByConversationId, 
+  const contactSession = useQuery(api.private.contactSessions.getOneByConversationId,
     conversationId ? {
       conversationId,
     } : "skip",
+  );
+
+  // Get conversation messages for the mailto link
+  const messages = useThreadMessages(
+    api.private.messages.getMany,
+    conversation?.threadId ? { threadId: conversation.threadId } : "skip",
+    { initialNumItems: 50 } // Get more messages for email context
   );
 
   const parseUserAgent = useMemo(() => {
@@ -205,10 +213,30 @@ export const ContactPanel = () => {
           </div>
         </div>
         {conversation && contactSession && (
-          <SendEmailDialog 
-            conversation={conversation}
-            contactSession={contactSession}
-          />
+          <Button
+            onClick={() => {
+              const uiMessages = toUIMessages(messages.results ?? []);
+              const conversationMessages = (uiMessages || [])
+                .filter(msg => msg.role === "user" || msg.role === "assistant")
+                .map(msg => ({
+                  id: msg.id,
+                  role: msg.role as "user" | "assistant",
+                  content: msg.content
+                }));
+              
+              const mailtoLink = generateMailtoLink(
+                contactSession.email,
+                contactSession.name || "Customer",
+                conversationMessages
+              );
+              window.location.href = mailtoLink;
+            }}
+            className="w-full"
+            size="lg"
+          >
+            <MailIcon className="mr-2 h-4 w-4" />
+            Send Email
+          </Button>
         )}
       </div>
 

@@ -1,11 +1,11 @@
 // packages/backend/convex/emails.ts
-import { internalAction, internalMutation, internalQuery, query, action } from "./_generated/server";
+import { internalAction, internalMutation, internalQuery, query } from "./_generated/server";
 import { v } from "convex/values";
 import { components } from "./_generated/api";
 import { Resend, vOnEmailEventArgs } from "@convex-dev/resend";
 import { internal } from "./_generated/api";
-import { 
-  welcomeEmailTemplate, 
+import {
+  welcomeEmailTemplate,
   welcomeEmailSubject
 } from "./emails/templates/welcome";
 import {
@@ -13,28 +13,14 @@ import {
   escalationEmailSubject
 } from "./emails/templates/escalation";
 import {
-  customerCommunicationEmailTemplate,
-  customerCommunicationEmailSubject
-} from "./emails/templates/customerCommunication";
-import {
   getEmailConfig,
   formatEmailAddress,
   getTrackingHeaders,
   sanitizeForEmail,
-  truncateText
+  truncateText,
 } from "./emails/utils";
 import { EMAIL_CONSTANTS } from "./emails/types";
-import { createClerkClient } from "@clerk/backend";
 import { supportAgent } from "./system/ai/agents/supportAgent";
-
-// Add Clerk client
-const clerkSecretKey = process.env.CLERK_SECRET_KEY;
-if (!clerkSecretKey) {
-  throw new Error("CLERK_SECRET_KEY environment variable is not set.");
-}
-const clerkClient = createClerkClient({
-  secretKey: clerkSecretKey,
-});
 
 /**
  * The Resend instance uses `testMode` in development, which simulates email sending
@@ -253,102 +239,6 @@ export const sendEscalationEmail = internalAction({
       console.error("Critical error in sendEscalationEmail action:", error);
       throw error;
     }
-  },
-});
-
-// Send email to customer from support team
-export const sendCustomerEmail = action({
-  args: {
-    conversationId: v.string(),
-    organizationId: v.string(),
-    customerEmail: v.string(),
-    customerName: v.string(),
-    subject: v.string(),
-    message: v.string(),
-    senderUserId: v.string(),
-  },
-  handler: async (ctx, args) => {
-    // Get sender information from Clerk
-    let senderName = "Support Team";
-    let fromEmail = "";
-    
-    try {
-      // Get sender user details
-      const senderUser = await clerkClient.users.getUser(args.senderUserId);
-      
-      // Build sender name with better readability
-      const userFullName = senderUser.firstName 
-        ? `${senderUser.firstName} ${senderUser.lastName || ''}`.trim() 
-        : null;
-      const userEmail = senderUser.emailAddresses[0]?.emailAddress;
-      senderName = userFullName || userEmail || "Support Team";
-
-      // Verify sender is a member of the organization - CRITICAL SECURITY CHECK
-      const orgMemberships = await clerkClient.users.getOrganizationMembershipList({
-        userId: args.senderUserId,
-      });
-
-      const currentOrgMembership = orgMemberships.data.find(
-        membership => membership.organization.id === args.organizationId
-      );
-
-      if (!currentOrgMembership) {
-        throw new Error("Unauthorized: Sender is not a member of the organization.");
-      }
-
-      // Set from email after authorization is confirmed
-      fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
-    } catch (error) {
-      console.error("Failed to verify sender details from Clerk:", error);
-      throw new Error("Failed to send email due to an authorization or verification issue.");
-    }
-
-    // Get email settings for organization
-    const emailSettings = await ctx.runQuery(internal.emails.getEmailSettings, {
-      organizationId: args.organizationId,
-    });
-
-    // Configure email
-    const fromEmailForConfig = emailSettings?.fromEmail || fromEmail;
-    const emailConfig = getEmailConfig({
-      fromName: senderName,
-      fromEmail: fromEmailForConfig ? fromEmailForConfig : undefined,
-    });
-
-    // Sanitize inputs
-    const sanitizedCustomerName = sanitizeForEmail(args.customerName);
-    const sanitizedSenderName = sanitizeForEmail(senderName);
-    const sanitizedSubject = sanitizeForEmail(args.subject);
-    const sanitizedMessage = sanitizeForEmail(args.message).replace(/\n/g, "<br />");
-
-    // Send email - the Convex Resend component handles retries, rate limiting, and durable execution
-    const emailId = await resend.sendEmail(ctx, {
-      from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
-      to: args.customerEmail,
-      subject: customerCommunicationEmailSubject(sanitizedSubject),
-      html: customerCommunicationEmailTemplate({
-        customerName: sanitizedCustomerName,
-        senderName: sanitizedSenderName,
-        subject: sanitizedSubject,
-        message: sanitizedMessage,
-        conversationId: args.conversationId,
-        dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
-      }),
-      headers: getTrackingHeaders(args.conversationId, "customer-communication"),
-    });
-
-    const emailIdString = String(emailId);
-    console.log(`Customer email sent. Resend ID: ${emailIdString}`);
-
-    // Log the email for business analytics
-    await ctx.runMutation(internal.emails.logEmailSent, {
-      emailId: emailIdString,
-      organizationId: args.organizationId,
-      emailType: "customer-communication",
-      recipientEmail: args.customerEmail,
-    });
-
-    return emailIdString;
   },
 });
 

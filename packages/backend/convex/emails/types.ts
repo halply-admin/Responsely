@@ -1,6 +1,6 @@
 // Shared email types and constants
 
-export type EmailType = "welcome" | "escalation" | "summary" | "notification" | "customer-communication";
+export type EmailType = "welcome" | "escalation" | "summary" | "notification";
 
 export interface BaseEmailData {
   recipientEmail: string;
@@ -24,4 +24,5 @@ export const EMAIL_CONSTANTS = {
   DASHBOARD_URL: "https://responsely.com/dashboard",
   SUPPORT_URL: "https://responsely.com/support",
   UNSUBSCRIBE_URL: "https://responsely.com/unsubscribe",
+  UNVERIFIED_DOMAINS: ['gmail.com', 'yahoo.com', 'outlook.com', 'hotmail.com', 'icloud.com'] as const,
 } as const; 
