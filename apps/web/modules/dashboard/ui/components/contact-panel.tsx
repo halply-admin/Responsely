@@ -17,7 +17,7 @@ import { ClockIcon, GlobeIcon, MailIcon, MonitorIcon } from "lucide-react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useMemo, useCallback } from "react";
-import { generateMailtoLink } from "@/lib/email-utils";
+import { generateMailtoLink, EMAIL_CONTEXT_MAX_MESSAGES } from "@/lib/email-utils";
 import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react";
 
 type InfoItem = {
@@ -53,7 +53,7 @@ export const ContactPanel = () => {
   const messages = useThreadMessages(
     api.private.messages.getMany,
     conversation?.threadId ? { threadId: conversation.threadId } : "skip",
-    { initialNumItems: 50 } // Get more messages for email context
+    { initialNumItems: EMAIL_CONTEXT_MAX_MESSAGES } // Get more messages for email context
   );
 
   const parseUserAgent = useMemo(() => {

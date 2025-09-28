@@ -16,12 +16,9 @@ export const getEmailConfig = (overrides?: {
   fromEmail?: string;
   replyToEmail?: string;
 }) => {
-  const defaultFromName = DEFAULT_EMAIL_CONFIG.fromName;
-  const defaultFromEmail = DEFAULT_EMAIL_CONFIG.fromEmail;
-
   return {
-    fromName: overrides?.fromName || defaultFromName,
-    fromEmail: overrides?.fromEmail || defaultFromEmail,
+    fromName: overrides?.fromName ?? DEFAULT_EMAIL_CONFIG.fromName,
+    fromEmail: overrides?.fromEmail ?? DEFAULT_EMAIL_CONFIG.fromEmail,
     replyToEmail: overrides?.replyToEmail ?? DEFAULT_EMAIL_CONFIG.replyToEmail,
   };
 };

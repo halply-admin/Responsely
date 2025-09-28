@@ -5,6 +5,7 @@ const SUBJECT_MAX_LENGTH = 50;
 const ASSISTANT_SENDER_NAME = "Support";
 const MAILTO_BODY_MAX_LENGTH = 3000; // Safe limit for mailto links
 const HISTORY_TRUNCATION_MESSAGE = "\n\n[Conversation history truncated for email length limits]";
+export const EMAIL_CONTEXT_MAX_MESSAGES = 50; // Maximum messages to include in email context
 
 /**
  * Get the display email address for the "From" field in the UI
@@ -33,9 +34,17 @@ export const generateMailtoLink = (
 ): string => {
   // Get the first customer message as the subject
   const firstCustomerMessage = messages.find(msg => msg.role === "user");
-  const subject = firstCustomerMessage 
-    ? `Re: ${firstCustomerMessage.content.substring(0, SUBJECT_MAX_LENGTH)}${firstCustomerMessage.content.length > SUBJECT_MAX_LENGTH ? '...' : ''}`
-    : `Re: Your support inquiry`;
+  
+  let subject: string;
+  if (firstCustomerMessage) {
+    const content = firstCustomerMessage.content;
+    const truncatedContent = content.length > SUBJECT_MAX_LENGTH
+      ? `${content.substring(0, SUBJECT_MAX_LENGTH)}...`
+      : content;
+    subject = `Re: ${truncatedContent}`;
+  } else {
+    subject = `Re: Your support inquiry`;
+  }
 
   // Build conversation history
   let conversationHistory = messages
@@ -47,7 +56,8 @@ export const generateMailtoLink = (
 
   // Truncate history if it's too long for mailto links
   if (conversationHistory.length > MAILTO_BODY_MAX_LENGTH) {
-    conversationHistory = conversationHistory.substring(0, MAILTO_BODY_MAX_LENGTH - HISTORY_TRUNCATION_MESSAGE.length) + HISTORY_TRUNCATION_MESSAGE;
+    const truncationPoint = Math.max(0, MAILTO_BODY_MAX_LENGTH - HISTORY_TRUNCATION_MESSAGE.length);
+    conversationHistory = conversationHistory.substring(0, truncationPoint) + HISTORY_TRUNCATION_MESSAGE;
   }
 
   const body = `Hi ${customerName},
