@@ -59,4 +59,28 @@ export const getTrackingHeaders = (
     { name: "X-Email-Type", value: emailType },
     { name: "X-Mailer", value: "Responsely" },
   ];
+};
+
+/**
+ * Generate idempotency key for email sending
+ * This helps prevent duplicate emails when retries occur
+ */
+export const generateIdempotencyKey = (
+  emailType: EmailType,
+  recipientEmail: string,
+  entityId: string,
+  timestamp?: number
+): string => {
+  const time = timestamp || Date.now();
+  const baseString = `${emailType}-${recipientEmail}-${entityId}-${Math.floor(time / (1000 * 60 * 5))}`; // 5-minute window
+  
+  // Simple hash function for consistent key generation
+  let hash = 0;
+  for (let i = 0; i < baseString.length; i++) {
+    const char = baseString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash = hash & hash; // Convert to 32-bit integer
+  }
+  
+  return `resp-${Math.abs(hash).toString(36)}`;
 }; 

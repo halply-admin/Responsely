@@ -21,7 +21,8 @@ import {
   formatEmailAddress,
   getTrackingHeaders,
   sanitizeForEmail,
-  truncateText
+  truncateText,
+  generateIdempotencyKey
 } from "./emails/utils";
 import { EMAIL_CONSTANTS } from "./emails/types";
 import { createClerkClient } from "@clerk/backend";
@@ -81,6 +82,29 @@ export const getEmailSettings = internalQuery({
       .query("emailSettings")
       .withIndex("by_organization", (q) => q.eq("organizationId", args.organizationId))
       .unique();
+  },
+});
+
+export const getRecentEmailsForRecipient = internalQuery({
+  args: { 
+    recipientEmail: v.string(),
+    emailType: v.string(),
+    hoursBack: v.number()
+  },
+  handler: async (ctx, args) => {
+    const cutoffTime = Date.now() - (args.hoursBack * 60 * 60 * 1000);
+    
+    return await ctx.db
+      .query("emailLogs")
+      .withIndex("by_email_type", (q) => q.eq("emailType", args.emailType))
+      .filter((q) => 
+        q.and(
+          q.eq(q.field("metadata.recipientEmail"), args.recipientEmail),
+          q.gt(q.field("timestamp"), cutoffTime),
+          q.eq(q.field("event"), "sent") // Only count successfully sent emails
+        )
+      )
+      .collect();
   },
 });
 
@@ -264,6 +288,18 @@ export const sendCustomerEmail = action({
   },
   handler: async (ctx, args) => {
     try {
+      // Rate limiting: Check if we've sent too many emails to this recipient recently
+      // Note: In actions, we need to use runQuery instead of direct db access
+      const recentEmailsQuery = await ctx.runQuery(internal.emails.getRecentEmailsForRecipient, {
+        recipientEmail: args.customerEmail,
+        emailType: "customer-communication",
+        hoursBack: 1
+      });
+
+      if (recentEmailsQuery.length >= 5) { // Max 5 emails per hour per recipient
+        throw new Error(`Rate limit exceeded: Too many emails sent to ${args.customerEmail} recently`);
+      }
+
       // Get sender information from Clerk
       let senderName = "Support Team";
       let fromEmail = "";
@@ -285,7 +321,7 @@ export const sendCustomerEmail = action({
         );
 
         if (currentOrgMembership?.organization) {
-          // Use organization email if available, otherwise fall back to user email
+          // This is a fallback. The user's email will be used if no organization-level 'from' email is set.
           fromEmail = senderUser.emailAddresses[0]?.emailAddress || "";
         }
       } catch (clerkError) {
@@ -310,6 +346,12 @@ export const sendCustomerEmail = action({
       const sanitizedSubject = sanitizeForEmail(args.subject);
       const sanitizedMessage = sanitizeForEmail(args.message);
 
+      const idempotencyKey = generateIdempotencyKey(
+        "customer-communication",
+        args.customerEmail,
+        args.conversationId
+      );
+
       const emailId = await resend.sendEmail(ctx, {
         from: formatEmailAddress(emailConfig.fromEmail, emailConfig.fromName),
         to: args.customerEmail,
@@ -323,6 +365,7 @@ export const sendCustomerEmail = action({
           dashboardUrl: EMAIL_CONSTANTS.DASHBOARD_URL,
         }),
         headers: getTrackingHeaders(args.conversationId, "customer-communication"),
+        idempotencyKey,
       });
 
       const emailIdString = String(emailId);

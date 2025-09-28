@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -58,11 +58,21 @@ export const SendEmailDialog = ({
 
   const form = useForm<SendEmailFormData>({
     resolver: zodResolver(sendEmailSchema),
-    defaultValues: {
-      subject: `Re: Your support inquiry`,
-      message: `Hello ${contactSession.name || 'there'},\n\nThank you for reaching out to us. \n\nBest regards,\nSupport Team`,
-    },
   });
+
+  useEffect(() => {
+    form.reset({
+      subject: `Re: Your support inquiry`,
+      message: [
+        `Hello ${contactSession.name || 'there'},`,
+        '',
+        'Thank you for reaching out to us.',
+        '',
+        'Best regards,',
+        'Support Team',
+      ].join('\n'),
+    });
+  }, [contactSession, form.reset]);
 
   const onSubmit = async (data: SendEmailFormData) => {
     if (!userId || !orgId) {

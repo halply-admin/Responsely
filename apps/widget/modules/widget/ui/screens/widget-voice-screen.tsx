@@ -83,6 +83,7 @@ export const WidgetVoiceScreen = () => {
             className="w-full"
             onClick={() => startCall()}
             size="lg"
+            disabled={isConnecting}
           >
             <MicIcon />
             Start Voice Chat
@@ -93,6 +94,7 @@ export const WidgetVoiceScreen = () => {
             onClick={() => endCall()}
             size="lg"
             variant="destructive"
+            disabled={isConnecting}
           >
             <MicOffIcon />
             End Call
