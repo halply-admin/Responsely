@@ -22,13 +22,6 @@ import { toUIMessages, useThreadMessages } from "@convex-dev/agent/react";
 import { useIsMobile } from "@workspace/ui/hooks/use-mobile";
 import { toast } from "sonner";
 
-// Type definitions
-type ConversationMessage = {
-  id: string;
-  role: 'user' | 'assistant';
-  content: string;
-};
-
 type InfoItem = {
   label: string;
   value: string | React.ReactNode;
@@ -41,34 +34,6 @@ type InfoSection = {
   title: string;
   items: InfoItem[];
 };
-
-// Email provider configuration - moved outside component for better performance
-const EMAIL_PROVIDERS = {
-  gmail: {
-    label: "Gmail",
-    description: "Open in Gmail web interface",
-    action: (email: string, messages: ConversationMessage[], openGmailCompose: Function) => 
-      openGmailCompose(email, messages)
-  },
-  outlook: {
-    label: "Outlook",
-    description: "Open in Outlook web interface", 
-    action: (email: string, messages: ConversationMessage[], openOutlookCompose: Function) => 
-      openOutlookCompose(email, messages)
-  },
-  yahoo: {
-    label: "Yahoo Mail",
-    description: "Open in Yahoo Mail web interface",
-    action: (email: string, messages: ConversationMessage[], openYahooCompose: Function) => 
-      openYahooCompose(email, messages)
-  },
-  apple: {
-    label: "Apple Mail",
-    description: "Open in default mail app (macOS/iOS)",
-    action: (email: string, messages: ConversationMessage[], openAppleMailCompose: Function) => 
-      openAppleMailCompose(email, messages)
-  }
-} as const;
 
 export const ContactPanel = () => {
   const params = useParams();
@@ -131,88 +96,73 @@ export const ContactPanel = () => {
     return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   }, []);
 
-  // Helper function to build email content
-  const buildEmailContent = useCallback((conversationMessages: ConversationMessage[]) => {
-    const firstCustomerMessage = conversationMessages.find(msg => msg.role === "user");
-    const subject = firstCustomerMessage 
-      ? `Re: ${firstCustomerMessage.content.substring(0, 50)}...`
-      : "Re: Your support inquiry";
+  const handleSendEmail = useCallback(() => {
+    if (!contactSession) return;
+    
+    const uiMessages = toUIMessages(messages.results ?? []);
+    const conversationMessages = uiMessages
+      .filter(msg => msg.role === "user" || msg.role === "assistant")
+      .map(msg => ({
+        id: msg.id,
+        role: msg.role as "user" | "assistant",
+        content: msg.content
+      }));
+    
+    const mailtoLink = generateMailtoLink(
+      contactSession.email,
+      contactSession.name || "Customer",
+      conversationMessages
+    );
 
-    const conversationHistory = conversationMessages
-      .map(msg => {
-        const sender = msg.role === "user" ? contactSession?.name || "Customer" : "Support";
-        return `${sender}: ${msg.content}`;
-      })
-      .join('\n\n');
-
-    const body = `Hi ${contactSession?.name || "Customer"},
-
-Thank you for reaching out to us. I'm following up on our conversation.
-
---- Original Conversation ---
-${conversationHistory}
---- End of Conversation ---
-
-Best regards,
-Support Team`;
-
-    return { subject, body };
-  }, [contactSession]);
-
-  const openGmailCompose = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
-    try {
-      const { subject, body } = buildEmailContent(conversationMessages);
-      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(gmailUrl, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Failed to open Gmail:', error);
-      toast.error("Failed to open Gmail");
+    // On mobile devices, use mailto directly (works well with native email apps)
+    if (isMobileDevice) {
+      window.location.href = mailtoLink;
+      return;
     }
-  }, [buildEmailContent]);
 
-  const openOutlookCompose = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
-    try {
-      const { subject, body } = buildEmailContent(conversationMessages);
-      const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(outlookUrl, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Failed to open Outlook:', error);
-      toast.error("Failed to open Outlook");
-    }
-  }, [buildEmailContent]);
+    // On web browsers, provide multiple options for better UX
+    const handleWebEmail = () => {
+      // Always copy to clipboard first as backup
+      copyEmailToClipboard(mailtoLink);
+      
+      // Try to open mailto link properly (without target="_blank")
+      try {
+        // Use window.location.href for better compatibility
+        window.location.href = mailtoLink;
+        
+        // Show success message with smart suggestions
+        const suggestedProvider = detectEmailProvider(contactSession.email);
+        const providerLabels = {
+          gmail: "Gmail",
+          outlook: "Outlook", 
+          yahoo: "Yahoo Mail",
+          apple: "Apple Mail"
+        };
+        
+        toast.success("Opening email client...", {
+          description: "Email content copied to clipboard as backup.",
+          action: {
+            label: `Try ${providerLabels[suggestedProvider]}`,
+            onClick: () => {
+              const actions = {
+                gmail: () => openGmailCompose(contactSession.email, conversationMessages),
+                outlook: () => openOutlookCompose(contactSession.email, conversationMessages),
+                yahoo: () => openYahooCompose(contactSession.email, conversationMessages),
+                apple: () => openAppleMailCompose(contactSession.email, conversationMessages)
+              };
+              actions[suggestedProvider]();
+            }
+          }
+        });
+        
+      } catch (error) {
+        // If mailto fails completely, show options
+        showEmailOptions(contactSession.email, conversationMessages);
+      }
+    };
 
-  const openYahooCompose = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
-    try {
-      const { subject, body } = buildEmailContent(conversationMessages);
-      const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.open(yahooUrl, '_blank', 'noopener,noreferrer');
-    } catch (error) {
-      console.error('Failed to open Yahoo Mail:', error);
-      toast.error("Failed to open Yahoo Mail");
-    }
-  }, [buildEmailContent]);
-
-  const openAppleMailCompose = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
-    try {
-      const { subject, body } = buildEmailContent(conversationMessages);
-      // Apple Mail uses the standard mailto protocol
-      const appleMailUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = appleMailUrl;
-    } catch (error) {
-      console.error('Failed to open Apple Mail:', error);
-      toast.error("Failed to open Apple Mail");
-    }
-  }, [buildEmailContent]);
-
-  // Detect user's likely email provider based on common patterns
-  const detectEmailProvider = useCallback((userEmail: string) => {
-    const domain = userEmail.toLowerCase().split('@')[1];
-    if (domain?.includes('gmail')) return 'gmail';
-    if (domain?.includes('outlook') || domain?.includes('hotmail') || domain?.includes('live')) return 'outlook';
-    if (domain?.includes('yahoo')) return 'yahoo';
-    if (domain?.includes('icloud') || domain?.includes('me.com') || domain?.includes('mac.com')) return 'apple';
-    return 'gmail'; // Default fallback
-  }, []);
+    handleWebEmail();
+  }, [contactSession, messages.results, isMobileDevice]);
 
   const copyEmailToClipboard = useCallback((mailtoLink: string) => {
     try {
@@ -246,136 +196,163 @@ Support Team`;
     }
   }, []);
 
-  // Improved email options display with single toast containing all providers
-  const showAllEmailProviders = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
-    const EmailProviderSelector = () => (
-      <div className="space-y-3">
-        <div>
-          <p className="font-medium text-sm">All email services</p>
-          <p className="text-xs text-muted-foreground">Click to open in your preferred service</p>
-        </div>
-        <div className="grid grid-cols-2 gap-2">
-          <button 
-            onClick={() => openGmailCompose(email, conversationMessages)} 
-            className="w-full text-center p-2 border rounded hover:bg-accent text-xs"
-          >
-            Gmail
-          </button>
-          <button 
-            onClick={() => openOutlookCompose(email, conversationMessages)} 
-            className="w-full text-center p-2 border rounded hover:bg-accent text-xs"
-          >
-            Outlook
-          </button>
-          <button 
-            onClick={() => openYahooCompose(email, conversationMessages)} 
-            className="w-full text-center p-2 border rounded hover:bg-accent text-xs"
-          >
-            Yahoo
-          </button>
-          <button 
-            onClick={() => openAppleMailCompose(email, conversationMessages)} 
-            className="w-full text-center p-2 border rounded hover:bg-accent text-xs"
-          >
-            Apple Mail
-          </button>
-        </div>
-      </div>
-    );
+  // Helper function to build email content
+  const buildEmailContent = useCallback((conversationMessages: any[]) => {
+    const firstCustomerMessage = conversationMessages.find(msg => msg.role === "user");
+    const subject = firstCustomerMessage 
+      ? `Re: ${firstCustomerMessage.content.substring(0, 50)}...`
+      : "Re: Your support inquiry";
 
-    toast(<EmailProviderSelector />, {
-      duration: 10000,
-    });
-  }, [openGmailCompose, openOutlookCompose, openYahooCompose, openAppleMailCompose]);
+    const conversationHistory = conversationMessages
+      .map(msg => {
+        const sender = msg.role === "user" ? contactSession?.name || "Customer" : "Support";
+        return `${sender}: ${msg.content}`;
+      })
+      .join('\n\n');
 
-  const showEmailOptions = useCallback((email: string, conversationMessages: ConversationMessage[]) => {
+    const body = `Hi ${contactSession?.name || "Customer"},
+
+Thank you for reaching out to us. I'm following up on our conversation.
+
+--- Original Conversation ---
+${conversationHistory}
+--- End of Conversation ---
+
+Best regards,
+Support Team`;
+
+    return { subject, body };
+  }, [contactSession]);
+
+  const openGmailCompose = useCallback((email: string, conversationMessages: any[]) => {
+    try {
+      const { subject, body } = buildEmailContent(conversationMessages);
+      const gmailUrl = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(email)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(gmailUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open Gmail:', error);
+      toast.error("Failed to open Gmail");
+    }
+  }, [buildEmailContent]);
+
+  const openOutlookCompose = useCallback((email: string, conversationMessages: any[]) => {
+    try {
+      const { subject, body } = buildEmailContent(conversationMessages);
+      const outlookUrl = `https://outlook.live.com/mail/0/deeplink/compose?to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(outlookUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open Outlook:', error);
+      toast.error("Failed to open Outlook");
+    }
+  }, [buildEmailContent]);
+
+  const openYahooCompose = useCallback((email: string, conversationMessages: any[]) => {
+    try {
+      const { subject, body } = buildEmailContent(conversationMessages);
+      const yahooUrl = `https://compose.mail.yahoo.com/?to=${encodeURIComponent(email)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.open(yahooUrl, '_blank', 'noopener,noreferrer');
+    } catch (error) {
+      console.error('Failed to open Yahoo Mail:', error);
+      toast.error("Failed to open Yahoo Mail");
+    }
+  }, [buildEmailContent]);
+
+  const openAppleMailCompose = useCallback((email: string, conversationMessages: any[]) => {
+    try {
+      const { subject, body } = buildEmailContent(conversationMessages);
+      // Apple Mail uses the standard mailto protocol
+      const appleMailUrl = `mailto:${email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      window.location.href = appleMailUrl;
+    } catch (error) {
+      console.error('Failed to open Apple Mail:', error);
+      toast.error("Failed to open Apple Mail");
+    }
+  }, [buildEmailContent]);
+
+  // Detect user's likely email provider based on common patterns
+  const detectEmailProvider = useCallback((userEmail: string) => {
+    const domain = userEmail.toLowerCase().split('@')[1];
+    if (domain?.includes('gmail')) return 'gmail';
+    if (domain?.includes('outlook') || domain?.includes('hotmail') || domain?.includes('live')) return 'outlook';
+    if (domain?.includes('yahoo')) return 'yahoo';
+    if (domain?.includes('icloud') || domain?.includes('me.com') || domain?.includes('mac.com')) return 'apple';
+    return 'gmail'; // Default fallback
+  }, []);
+
+  const showEmailOptions = useCallback((email: string, conversationMessages: any[]) => {
     const suggestedProvider = detectEmailProvider(email);
-    const providerConfig = EMAIL_PROVIDERS[suggestedProvider];
     
+    // Show primary suggestion based on email domain
+    const primaryAction = {
+      gmail: { label: "Open Gmail", action: () => openGmailCompose(email, conversationMessages) },
+      outlook: { label: "Open Outlook", action: () => openOutlookCompose(email, conversationMessages) },
+      yahoo: { label: "Open Yahoo Mail", action: () => openYahooCompose(email, conversationMessages) },
+      apple: { label: "Open Apple Mail", action: () => openAppleMailCompose(email, conversationMessages) }
+    }[suggestedProvider];
+
     toast.success("Email options available", {
       description: "Content copied to clipboard. Choose your preferred email service:",
       action: {
-        label: `Open ${providerConfig.label}`,
-        onClick: () => providerConfig.action(email, conversationMessages, 
-          suggestedProvider === 'gmail' ? openGmailCompose :
-          suggestedProvider === 'outlook' ? openOutlookCompose :
-          suggestedProvider === 'yahoo' ? openYahooCompose :
-          openAppleMailCompose
-        )
+        label: primaryAction.label,
+        onClick: primaryAction.action
       }
     });
 
-    // Show all available options in a single toast
+    // Show all available options
     setTimeout(() => {
-      toast.info("More email options", {
-        description: "View all available email services",
+      toast.info("All email services", {
+        description: "Click to open in your preferred service",
         action: {
-          label: "View All",
+          label: "More Options",
           onClick: () => showAllEmailProviders(email, conversationMessages)
         }
       });
     }, 1500);
-  }, [detectEmailProvider, openGmailCompose, openOutlookCompose, openYahooCompose, openAppleMailCompose, showAllEmailProviders]);
+  }, [detectEmailProvider, openGmailCompose, openOutlookCompose, openYahooCompose, openAppleMailCompose]);
 
-  const handleSendEmail = useCallback(() => {
-    if (!contactSession) return;
-    
-    const uiMessages = toUIMessages(messages.results ?? []);
-    const conversationMessages: ConversationMessage[] = uiMessages
-      .filter(msg => msg.role === "user" || msg.role === "assistant")
-      .map(msg => ({
-        id: msg.id,
-        role: msg.role as "user" | "assistant",
-        content: msg.content
-      }));
-    
-    const mailtoLink = generateMailtoLink(
-      contactSession.email,
-      contactSession.name || "Customer",
-      conversationMessages
-    );
-
-    // On mobile devices, use mailto directly (works well with native email apps)
-    if (isMobileDevice) {
-      window.location.href = mailtoLink;
-      return;
-    }
-
-    // On web browsers, provide multiple options for better UX
-    const handleWebEmail = () => {
-      // Always copy to clipboard first as backup
-      copyEmailToClipboard(mailtoLink);
-      
-      // Try to open mailto link properly (without target="_blank")
-      try {
-        // Use window.location.href for better compatibility
-        window.location.href = mailtoLink;
-        
-        // Show success message with smart suggestions using consolidated provider config
-        const suggestedProvider = detectEmailProvider(contactSession.email);
-        const providerConfig = EMAIL_PROVIDERS[suggestedProvider];
-        
-        toast.success("Opening email client...", {
-          description: "Email content copied to clipboard as backup.",
-          action: {
-            label: `Try ${providerConfig.label}`,
-            onClick: () => providerConfig.action(contactSession.email, conversationMessages,
-              suggestedProvider === 'gmail' ? openGmailCompose :
-              suggestedProvider === 'outlook' ? openOutlookCompose :
-              suggestedProvider === 'yahoo' ? openYahooCompose :
-              openAppleMailCompose
-            )
-          }
-        });
-        
-      } catch (error) {
-        // If mailto fails completely, show options
-        showEmailOptions(contactSession.email, conversationMessages);
+  const showAllEmailProviders = useCallback((email: string, conversationMessages: any[]) => {
+    // Show Gmail option
+    toast.info("Gmail", {
+      description: "Open in Gmail web interface",
+      action: {
+        label: "Open Gmail",
+        onClick: () => openGmailCompose(email, conversationMessages)
       }
-    };
+    });
 
-    handleWebEmail();
-  }, [contactSession, messages.results, isMobileDevice, copyEmailToClipboard, detectEmailProvider, openGmailCompose, openOutlookCompose, openYahooCompose, openAppleMailCompose, showEmailOptions]);
+    // Show Outlook option
+    setTimeout(() => {
+      toast.info("Outlook", {
+        description: "Open in Outlook web interface",
+        action: {
+          label: "Open Outlook",
+          onClick: () => openOutlookCompose(email, conversationMessages)
+        }
+      });
+    }, 500);
+
+    // Show Yahoo option
+    setTimeout(() => {
+      toast.info("Yahoo Mail", {
+        description: "Open in Yahoo Mail web interface",
+        action: {
+          label: "Open Yahoo",
+          onClick: () => openYahooCompose(email, conversationMessages)
+        }
+      });
+    }, 1000);
+
+    // Show Apple Mail option
+    setTimeout(() => {
+      toast.info("Apple Mail", {
+        description: "Open in default mail app (macOS/iOS)",
+        action: {
+          label: "Open Apple Mail",
+          onClick: () => openAppleMailCompose(email, conversationMessages)
+        }
+      });
+    }, 1500);
+  }, [openGmailCompose, openOutlookCompose, openYahooCompose, openAppleMailCompose]);
 
   const accordionSections = useMemo<InfoSection[]>(() => {
     if (!contactSession?.metadata) {
