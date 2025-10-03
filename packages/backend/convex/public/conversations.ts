@@ -182,7 +182,7 @@ export const escalateConversation = mutation({
 
     // Skip if already escalated
     if (conversation.status === "escalated") {
-      return { alreadyEscalated: true };
+      return { success: false, alreadyEscalated: true };
     }
 
     // Update conversation status
@@ -208,6 +208,6 @@ export const escalateConversation = mutation({
       { conversationId: conversation._id }
     );
 
-    return { success: true };
+    return { success: true, alreadyEscalated: false };
   },
 });

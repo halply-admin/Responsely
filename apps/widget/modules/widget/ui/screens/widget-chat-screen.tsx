@@ -34,6 +34,7 @@ import {
 } from "../components/styled-ai-components";
 import { AIResponse } from "@workspace/ui/components/ai/response";
 import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -119,7 +120,7 @@ export const WidgetChatScreen = () => {
 
   const handleEscalate = async () => {
     if (!conversationId || !contactSessionId) {
-      console.error("Unable to escalate conversation - missing IDs");
+      toast.error("Unable to escalate conversation - missing IDs");
       return;
     }
 
@@ -131,12 +132,15 @@ export const WidgetChatScreen = () => {
       });
 
       if (result.alreadyEscalated) {
-        console.log("Already connected with support team");
+        toast.info("You are already connected with our support team.");
+      } else if (result.success) {
+        toast.success("Successfully connected with the support team. They will respond shortly.");
       } else {
-        console.log("Successfully connected with support team");
+        toast.error("Failed to connect with support. Please try again.");
       }
     } catch (error) {
       console.error("Failed to escalate:", error);
+      toast.error("Failed to connect with support. Please try again.");
     } finally {
       setIsEscalating(false);
     }
@@ -181,7 +185,7 @@ export const WidgetChatScreen = () => {
                 </AIMessageContent>
                 {message.role === "assistant" && (
                   <DicebearAvatar
-                    imageUrl="/logo.svg"
+                    imageUrl="/responsely-logo.png"
                     seed="assistant"
                     size={32}
                   />

@@ -257,8 +257,12 @@ export const sendEscalationEmailForConversation = internalAction({
       return;
     }
 
-    // For now, use a default message since we need to understand the MessageDoc structure
-    const lastMessage = "Customer requested human support";
+    // Fetch the last user message from the conversation
+    const lastMessageContent = await ctx.runQuery(internal.system.conversations.getLastMessageForThread, {
+      threadId: conversation.threadId,
+    });
+    
+    const lastMessage = lastMessageContent || "Customer requested human support";
 
     // Fetch contact session
     const contactSession = await ctx.runQuery(internal.system.contactSessions.getOne, {

@@ -1,7 +1,18 @@
 import { Geist, Geist_Mono } from "next/font/google"
+import type { Metadata } from 'next'
 
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
+
+export const metadata: Metadata = {
+  title: 'Responsely Widget',
+  description: 'AI Customer Support Widget',
+  icons: {
+    icon: '/responsely-logo.png',
+    shortcut: '/responsely-logo.png',
+    apple: '/responsely-logo.png',
+  },
+};
 
 const fontSans = Geist({
   subsets: ["latin"],

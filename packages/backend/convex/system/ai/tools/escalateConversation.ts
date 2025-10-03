@@ -21,12 +21,7 @@ export const escalateConversation = createTool({
       return "Conversation not found";
     }
 
-    // Update status
-    await ctx.runMutation(internal.system.conversations.escalate, {
-      threadId: ctx.threadId,
-    });
-
-    // Update conversation with reason
+    // Update status and metadata in one go
     await ctx.runMutation(internal.system.conversations.updateEscalationMetadata, {
       conversationId: conversation._id,
       escalatedAt: Date.now(),

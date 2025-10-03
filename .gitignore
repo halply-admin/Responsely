@@ -42,3 +42,4 @@ gha-creds-*.json
 # Task documentation
 README-TASK.md
 CURRENT-TASK.md
+developer-persona.md
