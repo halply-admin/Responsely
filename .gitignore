@@ -38,3 +38,8 @@ npm-debug.log*
 
 .gemini/
 gha-creds-*.json
+
+# Task documentation
+README-TASK.md
+CURRENT-TASK.md
+developer-persona.md

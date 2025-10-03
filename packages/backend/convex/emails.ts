@@ -242,6 +242,49 @@ export const sendEscalationEmail = internalAction({
   },
 });
 
+export const sendEscalationEmailForConversation = internalAction({
+  args: {
+    conversationId: v.id("conversations"),
+  },
+  handler: async (ctx, args) => {
+    // Fetch conversation
+    const conversation = await ctx.runQuery(internal.system.conversations.get, {
+      conversationId: args.conversationId,
+    });
+
+    if (!conversation) {
+      console.error("Conversation not found:", args.conversationId);
+      return;
+    }
+
+    // Fetch the last user message from the conversation
+    const lastMessageContent = await ctx.runQuery(internal.system.conversations.getLastMessageForThread, {
+      threadId: conversation.threadId,
+    });
+    
+    const lastMessage = lastMessageContent || "Customer requested human support";
+
+    // Fetch contact session
+    const contactSession = await ctx.runQuery(internal.system.contactSessions.getOne, {
+      contactSessionId: conversation.contactSessionId,
+    });
+
+    if (!contactSession?.email) {
+      console.error("No contact session found for conversation:", args.conversationId);
+      return;
+    }
+
+    // Call existing sendEscalationEmail action
+    await ctx.runAction(internal.emails.sendEscalationEmail, {
+      conversationId: args.conversationId,
+      organizationId: conversation.organizationId,
+      customerEmail: contactSession.email,
+      customerName: contactSession.name,
+      lastMessage: lastMessage,
+    });
+  },
+});
+
 // -----------------------------
 // Analytics / cleanup queries
 // -----------------------------

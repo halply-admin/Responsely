@@ -189,21 +189,13 @@ export function LandingPage() {
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
               <div className="w-10 h-10 flex items-center justify-center">
-                <svg viewBox="0 0 100 100" className="w-10 h-10">
-                  {/* Chat bubble with Responsely text */}
-                  <path d="M15 20 C15 15, 20 10, 25 10 L65 10 C70 10, 75 15, 75 20 L75 45 C75 50, 70 55, 65 55 L35 55 L25 65 L25 55 C20 55, 15 50, 15 45 Z" 
-                        fill="none" 
-                        stroke="black" 
-                        strokeWidth="3" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"/>
-                  <path d="M55 35 C55 30, 60 25, 65 25 L85 25 C90 25, 95 30, 95 35 L95 55 C95 60, 90 65, 85 65 L75 65 L70 70 L70 65 C65 65, 60 60, 60 55 L60 40 C60 37, 57 35, 55 35 Z" 
-                        fill="none" 
-                        stroke="black" 
-                        strokeWidth="3" 
-                        strokeLinecap="round" 
-                        strokeLinejoin="round"/>
-                </svg>
+                <Image 
+                  src="/responsely-logo.png" 
+                  alt="Responsely Logo"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10"
+                />
               </div>
               <span className="text-xl font-bold text-gray-900">Responsely</span>
             </Link>

@@ -8,12 +8,12 @@ import { useThreadMessages, toUIMessages } from "@convex-dev/agent/react";
 import { WidgetHeader } from "@/modules/widget/ui/components/widget-header";
 import { Button } from "@workspace/ui/components/button";
 import { useAtomValue, useSetAtom } from "jotai";
-import { ArrowLeftIcon, MenuIcon } from "lucide-react";
+import { ArrowLeftIcon, MenuIcon, UserIcon } from "lucide-react";
 import { DicebearAvatar } from "@workspace/ui/components/dicebear-avatar";
 import { useInfiniteScroll } from "@workspace/ui/hooks/use-infinite-scroll";
 import { InfiniteScrollTrigger } from "@workspace/ui/components/infinite-scroll-trigger";
 import { contactSessionIdAtomFamily, conversationIdAtom, organizationIdAtom, screenAtom, widgetSettingsAtom } from "../../atoms/widget-atoms";
-import { useAction, useQuery } from "convex/react";
+import { useAction, useMutation, useQuery } from "convex/react";
 import { api } from "@workspace/backend/_generated/api";
 import { Form, FormField } from "@workspace/ui/components/form";
 import {
@@ -33,11 +33,15 @@ import {
   StyledAIMessageContent as AIMessageContent,
 } from "../components/styled-ai-components";
 import { AIResponse } from "@workspace/ui/components/ai/response";
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
 });
+
+// Minimum number of messages required before showing escalation button
+const MIN_MESSAGES_BEFORE_ESCALATION = 2;
 
 export const WidgetChatScreen = () => {
   const setScreen = useSetAtom(screenAtom);
@@ -49,6 +53,9 @@ export const WidgetChatScreen = () => {
   const contactSessionId = useAtomValue(
     contactSessionIdAtomFamily(organizationId || "")
   );
+
+  const [isEscalating, setIsEscalating] = useState(false);
+  const escalateConversation = useMutation(api.public.conversations.escalateConversation);
 
   const onBack = () => {
     setConversationId(null);
@@ -92,6 +99,8 @@ export const WidgetChatScreen = () => {
     loadSize: 10,
   });
 
+  const uiMessages = useMemo(() => toUIMessages(messages.results ?? []), [messages.results]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -112,6 +121,32 @@ export const WidgetChatScreen = () => {
       prompt: values.message,
       contactSessionId,
     });
+  };
+
+  const handleEscalate = async () => {
+    if (!conversationId || !contactSessionId) {
+      toast.error("An error occurred. Please try again later.");
+      return;
+    }
+
+    setIsEscalating(true);
+    try {
+      const result = await escalateConversation({
+        conversationId,
+        contactSessionId,
+      });
+
+      if (result.alreadyEscalated) {
+        toast.info("You are already connected with our support team.");
+      } else if (result.success) {
+        toast.success("Successfully connected with the support team. They will respond shortly.");
+      }
+    } catch (error) {
+      console.error("Failed to escalate:", error);
+      toast.error("Failed to connect with support. Please try again.");
+    } finally {
+      setIsEscalating(false);
+    }
   };
 
   return (
@@ -142,7 +177,7 @@ export const WidgetChatScreen = () => {
             onLoadMore={handleLoadMore}
             ref={topElementRef}
           />
-          {toUIMessages(messages.results ?? [])?.map((message) => {
+              {uiMessages?.map((message) => {
             return (
               <AIMessage
                 from={message.role === "user" ? "user" : "assistant"}
@@ -153,7 +188,7 @@ export const WidgetChatScreen = () => {
                 </AIMessageContent>
                 {message.role === "assistant" && (
                   <DicebearAvatar
-                    imageUrl="/logo.svg"
+                    imageUrl="/responsely-logo.png"
                     seed="assistant"
                     size={32}
                   />
@@ -164,7 +199,7 @@ export const WidgetChatScreen = () => {
         </AIConversationContent>
         <AIConversationScrollButton />
       </AIConversation>
-      {toUIMessages(messages.results ?? [])?.length === 1 && (
+          {uiMessages?.length === 1 && (
         <AISuggestions className="flex w-full flex-col items-end p-2">
           {suggestions.map((suggestion) => {
             if (!suggestion) {
@@ -188,44 +223,79 @@ export const WidgetChatScreen = () => {
           })}
         </AISuggestions>
       )}
-      <Form {...form}>
-          <AIInput
-            className="rounded-none border-x-0 border-b-0"
-            onSubmit={form.handleSubmit(onSubmit)}
-          >
-            <FormField
-              control={form.control}
-              disabled={conversation?.status === "resolved"}
-              name="message"
-              render={({ field }) => (
-                <AIInputTextarea
-                  disabled={conversation?.status === "resolved"}
-                  onChange={field.onChange}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      form.handleSubmit(onSubmit)();
+      
+      {/* Escalation button and status */}
+      <div className="border-t bg-background">
+        {/* Show escalation button when conversation active and not already escalated */}
+        {conversation?.status === "unresolved" && uiMessages?.length > MIN_MESSAGES_BEFORE_ESCALATION && (
+          <div className="px-4 pt-3 pb-2">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleEscalate}
+              disabled={isEscalating}
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+            >
+              <UserIcon className="mr-2 size-3" />
+              {isEscalating ? "Connecting..." : "Talk to a human"}
+            </Button>
+          </div>
+        )}
+
+        {/* Show status when escalated */}
+        {conversation?.status === "escalated" && (
+          <div className="px-4 pt-3 pb-2">
+            <div className="flex items-center justify-center gap-2 text-xs text-muted-foreground">
+              <div className="size-2 rounded-full bg-orange-500 animate-pulse" />
+              <span>Support team will respond soon</span>
+            </div>
+          </div>
+        )}
+
+        {/* Chat input */}
+        <div className="p-4 pt-2">
+          <Form {...form}>
+            <AIInput
+              className="rounded-none border-x-0 border-b-0"
+              onSubmit={form.handleSubmit(onSubmit)}
+            >
+              <FormField
+                control={form.control}
+                disabled={conversation?.status === "resolved" || conversation?.status === "escalated"}
+                name="message"
+                render={({ field }) => (
+                  <AIInputTextarea
+                    disabled={conversation?.status === "resolved" || conversation?.status === "escalated"}
+                    onChange={field.onChange}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        form.handleSubmit(onSubmit)();
+                      }
+                    }}
+                    placeholder={
+                      conversation?.status === "resolved"
+                        ? "This conversation has been resolved."
+                        : conversation?.status === "escalated"
+                        ? "Support team will respond soon..."
+                        : "Type your message..."
                     }
-                  }}
-                  placeholder={
-                    conversation?.status === "resolved"
-                      ? "This conversation has been resolved."
-                      : "Type your message..."
-                  }
-                  value={field.value}
-                />
-              )}
-            />
-            <AIInputToolbar>
-              <AIInputTools />
-              <AIInputSubmit
-                disabled={conversation?.status === "resolved" || !form.formState.isValid}
-                status="ready"
-                type="submit"
+                    value={field.value}
+                  />
+                )}
               />
-            </AIInputToolbar>
-          </AIInput>
-      </Form>
+              <AIInputToolbar>
+                <AIInputTools />
+                <AIInputSubmit
+                  disabled={conversation?.status === "resolved" || conversation?.status === "escalated" || !form.formState.isValid}
+                  status="ready"
+                  type="submit"
+                />
+              </AIInputToolbar>
+            </AIInput>
+          </Form>
+        </div>
+      </div>
     </>
   );
 };
