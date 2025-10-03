@@ -125,11 +125,11 @@ const PRICING_PLANS: PricingPlan[] = [
     features: [
       "Everything in Free",
       "Affordable Time-Saving Chat",
-      "Phone-based AI with VAPI", 
-      "Context-based answers",
-      "Impact reporting & analytics",
+      "Phone-Based AI Support",
+      "Context-Based AI Answers",
+      "Impact Reporting",
       "Knowledge Base",
-      "Screenshot services",
+      "Visual Context",
       "Unlimited messages",
       "Priority support"
     ],
