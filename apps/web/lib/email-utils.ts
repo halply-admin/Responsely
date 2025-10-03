@@ -105,7 +105,7 @@ export const generateMailtoLink = (
 
 /**
  * Generate email content (subject and body) for clipboard copying
- * Returns the same content as generateMailtoLink but as separate subject and body
+ * Returns the full, untruncated email content (subject and body).
  */
 export const generateEmailContent = (
   customerName: string,
