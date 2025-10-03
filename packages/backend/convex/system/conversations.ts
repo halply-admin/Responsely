@@ -92,12 +92,14 @@ export const getLastMessageForThread = internalQuery({
     });
 
     if (messages.page.length > 0) {
-      // Look for the most recent user message (iterate backward from the end)
+      // Look for the most recent message with content (iterate backward from the end)
+      // Note: We'll get the most recent message regardless of role since MessageDoc structure
+      // doesn't directly expose role in the backend. The frontend toUIMessages handles role mapping.
       for (let i = messages.page.length - 1; i >= 0; i--) {
         const message = messages.page[i];
         if (!message) continue;
         
-        // Check if this message has user content
+        // Check if this message has content
         if (message.message && typeof message.message === 'object' && 'content' in message.message) {
           const messageContent = message.message.content;
           if (typeof messageContent === 'string' && messageContent.trim()) {

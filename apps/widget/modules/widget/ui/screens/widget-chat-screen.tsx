@@ -99,6 +99,8 @@ export const WidgetChatScreen = () => {
     loadSize: 10,
   });
 
+  const uiMessages = useMemo(() => toUIMessages(messages.results ?? []), [messages.results]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -177,7 +179,7 @@ export const WidgetChatScreen = () => {
             onLoadMore={handleLoadMore}
             ref={topElementRef}
           />
-          {toUIMessages(messages.results ?? [])?.map((message) => {
+              {uiMessages?.map((message) => {
             return (
               <AIMessage
                 from={message.role === "user" ? "user" : "assistant"}
@@ -199,7 +201,7 @@ export const WidgetChatScreen = () => {
         </AIConversationContent>
         <AIConversationScrollButton />
       </AIConversation>
-      {toUIMessages(messages.results ?? [])?.length === 1 && (
+          {uiMessages?.length === 1 && (
         <AISuggestions className="flex w-full flex-col items-end p-2">
           {suggestions.map((suggestion) => {
             if (!suggestion) {
@@ -227,7 +229,7 @@ export const WidgetChatScreen = () => {
       {/* Escalation button and status */}
       <div className="border-t bg-background">
         {/* Show escalation button when conversation active and not already escalated */}
-        {conversation?.status === "unresolved" && toUIMessages(messages.results ?? [])?.length > MIN_MESSAGES_BEFORE_ESCALATION && (
+        {conversation?.status === "unresolved" && uiMessages?.length > MIN_MESSAGES_BEFORE_ESCALATION && (
           <div className="px-4 pt-3 pb-2">
             <Button
               variant="ghost"
