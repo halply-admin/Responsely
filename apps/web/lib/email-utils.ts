@@ -125,7 +125,7 @@ export const generateEmailContent = (
 export const generateEmailArtifacts = (
   customerName: string,
   messages: ConversationMessage[] = []
-) => {
+): { subject: string; body: string; mailtoBody: string } => {
   const subject = _generateEmailSubject(messages);
   const conversationHistory = _buildConversationHistory(messages, customerName);
   const body = _buildEmailBody(customerName, conversationHistory);
