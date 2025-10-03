@@ -128,7 +128,7 @@ const PRICING_PLANS: PricingPlan[] = [
       "Phone-Based AI Support",
       "Context-Based AI Answers",
       "Impact Reporting",
-      "Knowledge Base",
+      "Smart Escalation",
       "Visual Context",
       "Unlimited messages",
       "Priority support"
