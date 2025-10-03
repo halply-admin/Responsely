@@ -7,12 +7,12 @@ import { Providers } from "@/components/providers"
 import { Toaster } from "@workspace/ui/components/sonner";
 
 export const metadata: Metadata = {
-  title: 'Responsely - AI Customer Support',
-  description: 'Intelligent AI customer support with voice agents, smart escalation, and team collaboration.',
+  title: 'Responsely',
+  description: 'AI Customer Service that saves you time. Affordable AI support for small businesses.',
   icons: {
-    icon: '/responsely-logo.png',
-    shortcut: '/responsely-logo.png',
-    apple: '/responsely-logo.png',
+    icon: '/responsely-logo-white-bg.png',
+    shortcut: '/responsely-logo-white-bg.png',
+    apple: '/responsely-logo-white-bg.png',
   },
 };
 

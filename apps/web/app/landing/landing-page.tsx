@@ -51,54 +51,54 @@ const NAV_LINKS: NavLink[] = [
 const FEATURES: Feature[] = [
   {
     icon: MessageCircle,
-    title: "AI Customer Support",
-    description: "Understands context and intent, not just keywords. Provides helpful, accurate responses every time."
+    title: "Affordable Time-Saving Chat",
+    description: "Get time back from answering the same questions. AI handles repetitive inquiries so you can focus on growing your business."
   },
   {
     icon: Phone,
-    title: "AI Voice Agent",
-    description: "Natural phone conversations with sub-second response times. Available 24/7 for your customers."
+    title: "Phone-Based AI Support",
+    description: "VAPI plugin integration provides natural phone conversations. Your customers get instant help via voice calls."
   },
   {
     icon: Zap,
-    title: "Smart Escalation",
-    description: "Automatically escalates complex issues to your team with complete conversation context."
+    title: "Context-Based AI Answers",
+    description: "AI understands your business context and provides accurate, personalized responses that actually help your customers."
   },
   {
     icon: Users,
-    title: "Team Collaboration",
-    description: "Unified workspace where your team can collaborate, assign tickets, and track performance."
+    title: "Smart Escalation",
+    description: "Complex issues automatically escalate to your team with complete conversation context and history."
   },
   {
     icon: BookOpen,
-    title: "Knowledge Base",
-    description: "AI-powered search that finds answers instantly from your documentation and FAQs."
+    title: "Impact Reporting",
+    description: "Track and report on the impact your support is having. See response times, resolution rates, and customer satisfaction."
   },
   {
     icon: Camera,
     title: "Visual Context",
-    description: "Screenshot capture so you can see exactly what customers see for faster resolution."
+    description: "Screenshot capture so you can see exactly what customers see for faster resolution and better understanding."
   }
 ];
 
 const TESTIMONIALS: Testimonial[] = [
   {
-    quote: "Responsely reduced our response time by 70% and our customers love getting instant, accurate help. It's like having our best support agent available 24/7.",
+    quote: "Responsely gave us our time back! We were spending hours answering the same questions. Now our AI handles 80% of inquiries and our customers get instant help.",
     author: "Sarah Chen",
-    role: "Head of Customer Success",
-    company: "TechFlow Inc"
+    role: "Owner",
+    company: "Local Bakery"
   },
   {
-    quote: "The voice agent feature is incredible. Our phone support is now completely automated for common issues, freeing up our team for complex problems.",
+    quote: "The phone support with VAPI is a game-changer. Our customers can call and get help immediately, even when we're closed. It's like having a 24/7 receptionist.",
     author: "Michael Rodriguez", 
-    role: "CEO",
-    company: "GrowthLabs"
+    role: "Founder",
+    company: "Small Tech Shop"
   },
   {
-    quote: "Setup took 5 minutes and we saw immediate results. The AI understands context better than solutions that cost 10x more.",
+    quote: "For $20/month, we get professional customer service that actually understands our business. The reporting shows us exactly how much time we're saving.",
     author: "Emma Thompson",
-    role: "Support Manager", 
-    company: "CloudSync"
+    role: "Manager", 
+    company: "Family Restaurant"
   }
 ];
 
@@ -107,7 +107,7 @@ const PRICING_PLANS: PricingPlan[] = [
     name: "Free",
     price: "$0",
     period: "forever",
-    description: "Perfect for small teams getting started",
+    description: "Perfect for small businesses getting started",
     features: [
       "Basic chat support",
       "Up to 100 messages/month", 
@@ -119,15 +119,15 @@ const PRICING_PLANS: PricingPlan[] = [
   },
   {
     name: "Pro",
-    price: "$10",
+    price: "$20",
     period: "/month",
-    description: "Everything you need to scale customer success",
+    description: "Everything small businesses need for professional customer service",
     features: [
       "Everything in Free",
       "AI Customer Support",
-      "AI Voice Agent", 
-      "Phone System",
-      "Team collaboration",
+      "Phone-based AI with VAPI", 
+      "Context-based answers",
+      "Impact reporting & analytics",
       "Knowledge Base",
       "Screenshot services",
       "Unlimited messages",
@@ -190,7 +190,7 @@ export function LandingPage() {
             <Link href="/" className="flex items-center space-x-3">
               <div className="w-10 h-10 flex items-center justify-center">
                 <Image 
-                  src="/responsely-logo.png" 
+                  src="/responsely-logo-white-bg.png" 
                   alt="Responsely Logo"
                   width={40}
                   height={40}
@@ -269,12 +269,12 @@ export function LandingPage() {
             <div className="space-y-8">
               <div className="space-y-6">
                 <h1 className="text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  AI Customer Service That{" "}
-                  <span className="text-blue-600">Actually Works</span>
+                  AI Customer Service that{" "}
+                  <span className="text-blue-600">saves you time</span>
                 </h1>
                 
                 <p className="text-xl text-gray-600 leading-relaxed max-w-lg">
-                  Resolve 90% of customer issues instantly with AI that understands context, speaks naturally, and escalates intelligently.
+                  Stop answering the same questions over and over. Let AI handle customer inquiries while you focus on growing your small business.
                 </p>
               </div>
 
@@ -337,10 +337,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Customer service that actually resolves issues
+              How small businesses save time with AI
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From chat to voice calls, our AI handles 90% of customer interactions while seamlessly escalating complex issues to your team.
+              From chat to phone calls, our AI handles repetitive questions so you can focus on what matters most - growing your business.
             </p>
           </div>
 
@@ -418,10 +418,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-4xl font-bold text-gray-900 mb-4">
-              Everything you need for customer success
+              Everything small businesses need for professional support
             </h2>
             <p className="text-xl text-gray-600">
-              All the tools to transform your customer service experience
+              Affordable tools that save you time and help your customers get the answers they need
             </p>
           </div>
 
@@ -448,7 +448,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-12">
             <h3 className="text-2xl font-bold text-gray-900 mb-4">
-              Loved by growing companies
+              Trusted by small businesses like yours
             </h3>
           </div>
 
@@ -560,10 +560,10 @@ export function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="space-y-8">
             <h2 className="text-4xl md:text-5xl font-bold text-gray-900">
-              Ready to transform your customer service?
+              Ready to get your time back?
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Join thousands of companies using Responsely to deliver exceptional customer experiences that drive growth.
+              Join small businesses using Responsely to stop answering the same questions and focus on what matters most - growing your business.
             </p>
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -598,26 +598,18 @@ export function LandingPage() {
             <div className="md:col-span-1">
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-10 h-10 flex items-center justify-center">
-                  <svg viewBox="0 0 100 100" className="w-10 h-10">
-                    {/* Chat bubble with Responsely text */}
-                    <path d="M15 20 C15 15, 20 10, 25 10 L65 10 C70 10, 75 15, 75 20 L75 45 C75 50, 70 55, 65 55 L35 55 L25 65 L25 55 C20 55, 15 50, 15 45 Z" 
-                          fill="none" 
-                          stroke="black" 
-                          strokeWidth="3" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"/>
-                    <path d="M55 35 C55 30, 60 25, 65 25 L85 25 C90 25, 95 30, 95 35 L95 55 C95 60, 90 65, 85 65 L75 65 L70 70 L70 65 C65 65, 60 60, 60 55 L60 40 C60 37, 57 35, 55 35 Z" 
-                          fill="none" 
-                          stroke="black" 
-                          strokeWidth="3" 
-                          strokeLinecap="round" 
-                          strokeLinejoin="round"/>
-                  </svg>
+                  <Image 
+                    src="/responsely-logo-white-bg.png" 
+                    alt="Responsely Logo"
+                    width={40}
+                    height={40}
+                    className="w-10 h-10"
+                  />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Responsely</span>
               </div>
               <p className="text-gray-600 mb-6 leading-relaxed">
-                AI-powered customer service that actually resolves issues. Transform your support experience today.
+                Affordable AI customer service for small businesses. Get your time back and let AI handle repetitive questions.
               </p>
             </div>
 
