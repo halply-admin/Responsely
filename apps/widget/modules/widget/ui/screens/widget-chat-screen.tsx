@@ -188,9 +188,9 @@ export const WidgetChatScreen = () => {
                 </AIMessageContent>
                 {message.role === "assistant" && (
                   <DicebearAvatar
-                    imageUrl="/responsely-logo.png"
+                    imageUrl="/responsely-logo-transparent-bg.png"
                     seed="assistant"
-                    size={32}
+                    size={38}
                   />
                 )}
               </AIMessage>

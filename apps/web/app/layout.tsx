@@ -10,9 +10,9 @@ export const metadata: Metadata = {
   title: 'Responsely',
   description: 'AI Customer Service that saves you time. Affordable AI support for small businesses.',
   icons: {
-    icon: '/responsely-logo-white-bg.png',
-    shortcut: '/responsely-logo-white-bg.png',
-    apple: '/responsely-logo-white-bg.png',
+    icon: '/responsely-logo-transparent-bg.png',
+    shortcut: '/responsely-logo-transparent-bg.png',
+    apple: '/responsely-logo-transparent-bg.png',
   },
 };
 

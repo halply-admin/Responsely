@@ -44,9 +44,9 @@ export const PluginCard = ({
           <Image
             alt="Platform"
             className="object-contain"
-            height={40}
-            width={40}
-            src="/responsely-logo.png"
+            height={48}
+            width={48}
+            src="/responsely-logo-transparent-bg.png"
           />
         </div>
       </div>
