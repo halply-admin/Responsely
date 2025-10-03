@@ -97,16 +97,30 @@ export const getLastMessageForThread = internalQuery({
         const message = messages.page[i];
         if (!message) continue;
         
-        // Check if this message has content and is from a user
-        if (
-          message.message &&
-          typeof message.message === 'object' &&
-          'content' in message.message &&
-          message.message.role === 'user'
-        ) {
-          const messageContent = message.message.content;
-          if (typeof messageContent === 'string' && messageContent.trim()) {
-            return messageContent;
+        // Skip if not a user message or has no content
+        if (message.message?.role !== 'user' || !message.message.content) {
+          continue;
+        }
+
+        const messageContent = message.message.content;
+        if (typeof messageContent === 'string' && messageContent.trim()) {
+          return messageContent;
+        }
+
+        if (Array.isArray(messageContent)) {
+          // Find the first text part in a possible multi-modal message
+          const textPart = messageContent.find(
+            (part): part is { type: 'text'; text: string } =>
+              typeof part === 'object' && part.type === 'text' && typeof part.text === 'string'
+          );
+
+          if (textPart?.text.trim()) {
+            return textPart.text;
+          }
+
+          // If no text part, but other content exists, return a placeholder.
+          if (messageContent.length > 0) {
+            return "[User sent a message with non-text content]";
           }
         }
       }
