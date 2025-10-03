@@ -8,9 +8,9 @@ export const metadata: Metadata = {
   title: 'Responsely Widget',
   description: 'AI Customer Support Widget',
   icons: {
-    icon: '/responsely-logo.png',
-    shortcut: '/responsely-logo.png',
-    apple: '/responsely-logo.png',
+    icon: '/responsely-logo-transparent-bg.png',
+    shortcut: '/responsely-logo-transparent-bg.png',
+    apple: '/responsely-logo-transparent-bg.png',
   },
 };
 

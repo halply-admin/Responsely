@@ -188,13 +188,13 @@ export function LandingPage() {
           <div className="flex items-center justify-between h-16">
             {/* Logo */}
             <Link href="/" className="flex items-center space-x-3">
-              <div className="w-10 h-10 flex items-center justify-center">
+              <div className="w-12 h-12 flex items-center justify-center">
                 <Image 
-                  src="/responsely-logo-white-bg.png" 
+                  src="/responsely-logo-transparent-bg.png" 
                   alt="Responsely Logo"
-                  width={40}
-                  height={40}
-                  className="w-10 h-10"
+                  width={48}
+                  height={48}
+                  className="w-12 h-12"
                 />
               </div>
               <span className="text-xl font-bold text-gray-900">Responsely</span>
@@ -597,12 +597,12 @@ export function LandingPage() {
             {/* Company Info */}
             <div className="md:col-span-1">
               <div className="flex items-center space-x-3 mb-4">
-                <div className="w-10 h-10 flex items-center justify-center">
+                <div className="w-12 h-12 flex items-center justify-center">
                   <Image 
-                    src="/responsely-logo-white-bg.png" 
+                    src="/responsely-logo-transparent-bg.png" 
                     alt="Responsely Logo"
-                    width={40}
-                    height={40}
+                    width={48}
+                    height={48}
                   />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Responsely</span>
