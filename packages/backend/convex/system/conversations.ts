@@ -92,8 +92,11 @@ export const getLastMessageForThread = internalQuery({
     });
 
     if (messages.page.length > 0) {
-      // Look for the most recent user message
-      for (const message of messages.page) {
+      // Look for the most recent user message (iterate backward from the end)
+      for (let i = messages.page.length - 1; i >= 0; i--) {
+        const message = messages.page[i];
+        if (!message) continue;
+        
         // Check if this message has user content
         if (message.message && typeof message.message === 'object' && 'content' in message.message) {
           const messageContent = message.message.content;

@@ -40,6 +40,9 @@ const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
 });
 
+// Minimum number of messages required before showing escalation button
+const MIN_MESSAGES_BEFORE_ESCALATION = 2;
+
 export const WidgetChatScreen = () => {
   const setScreen = useSetAtom(screenAtom);
   const setConversationId = useSetAtom(conversationIdAtom);
@@ -120,7 +123,7 @@ export const WidgetChatScreen = () => {
 
   const handleEscalate = async () => {
     if (!conversationId || !contactSessionId) {
-      toast.error("Unable to escalate conversation - missing IDs");
+      toast.error("An error occurred. Please try again later.");
       return;
     }
 
@@ -224,7 +227,7 @@ export const WidgetChatScreen = () => {
       {/* Escalation button and status */}
       <div className="border-t bg-background">
         {/* Show escalation button when conversation active and not already escalated */}
-        {conversation?.status === "unresolved" && toUIMessages(messages.results ?? [])?.length > 2 && (
+        {conversation?.status === "unresolved" && toUIMessages(messages.results ?? [])?.length > MIN_MESSAGES_BEFORE_ESCALATION && (
           <div className="px-4 pt-3 pb-2">
             <Button
               variant="ghost"
