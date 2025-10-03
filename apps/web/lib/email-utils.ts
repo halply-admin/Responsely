@@ -18,7 +18,7 @@ export const getDisplayFromEmail = (userEmail?: string): string => {
 /**
  * Message interface to match the conversation message structure
  */
-interface ConversationMessage {
+export interface ConversationMessage {
   id: string;
   role: "user" | "assistant";
   content: string;
@@ -84,4 +84,49 @@ Support Team`;
   const encodedBody = encodeURIComponent(body);
 
   return `mailto:${customerEmail}?subject=${encodedSubject}&body=${encodedBody}`;
+};
+
+/**
+ * Generate email content (subject and body) for clipboard copying
+ * Returns the same content as generateMailtoLink but as separate subject and body
+ */
+export const generateEmailContent = (
+  customerName: string,
+  messages: ConversationMessage[] = []
+): { subject: string; body: string } => {
+  // Get the first customer message as the subject
+  const firstCustomerMessage = messages.find(msg => msg.role === "user");
+  
+  let subject: string;
+  if (firstCustomerMessage) {
+    const content = firstCustomerMessage.content;
+    const truncatedContent = content.length > SUBJECT_MAX_LENGTH
+      ? `${content.substring(0, SUBJECT_MAX_LENGTH)}...`
+      : content;
+    subject = `Re: ${truncatedContent}`;
+  } else {
+    subject = `Re: Your support inquiry`;
+  }
+
+  // Build conversation history
+  const conversationHistory = messages
+    .map(msg => {
+      const sender = msg.role === "user" ? customerName : ASSISTANT_SENDER_NAME;
+      return `${sender}: ${msg.content}`;
+    })
+    .join('\n\n');
+
+  // For clipboard content, we don't need to truncate as much as mailto links
+  const body = `Hi ${customerName},
+
+Thank you for reaching out to us. I'm following up on our conversation.
+
+--- Original Conversation ---
+${conversationHistory}
+--- End of Conversation ---
+
+Best regards,
+Support Team`;
+
+  return { subject, body };
 }; 

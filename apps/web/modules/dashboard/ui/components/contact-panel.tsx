@@ -102,42 +102,39 @@ export const ContactPanel = () => {
     return /android|webos|iphone|ipad|ipod|blackberry|iemobile|opera mini/i.test(userAgent);
   }, []);
 
-  // Simple function to copy email content to clipboard
-  const copyEmailToClipboard = useCallback((emailContent: string) => {
+  // Robust function to copy email content to clipboard with proper fallback
+  const copyEmailToClipboard = useCallback(async (emailContent: string) => {
     try {
-      navigator.clipboard.writeText(emailContent).then(() => {
-        toast.success("Email content copied to clipboard");
-      }).catch((error) => {
-        console.error('Clipboard API failed:', error);
-        // Fallback for older browsers
-        try {
-          const textArea = document.createElement('textarea');
-          textArea.value = emailContent;
-          textArea.style.position = 'fixed';
-          textArea.style.opacity = '0';
-          document.body.appendChild(textArea);
-          textArea.select();
-          
-          const success = document.execCommand('copy');
-          document.body.removeChild(textArea);
-          
-          if (success) {
-            toast.success("Email content copied to clipboard");
-          } else {
-            throw new Error('execCommand copy failed');
-          }
-        } catch (fallbackError) {
-          console.error('Fallback clipboard copy failed:', fallbackError);
-          toast.error("Failed to copy email content");
-        }
-      });
+      // Try modern clipboard API first
+      await navigator.clipboard.writeText(emailContent);
+      toast.success("Email content copied to clipboard");
     } catch (error) {
-      console.error('Failed to copy email content:', error);
-      toast.error("Failed to copy email content");
+      console.warn("Clipboard API failed, trying fallback:", error);
+      // Fallback for older browsers or if the above fails
+      try {
+        const textArea = document.createElement('textarea');
+        textArea.value = emailContent;
+        textArea.style.position = 'fixed';
+        textArea.style.opacity = '0';
+        document.body.appendChild(textArea);
+        textArea.select();
+        
+        const success = document.execCommand('copy');
+        document.body.removeChild(textArea);
+        
+        if (success) {
+          toast.success("Email content copied to clipboard");
+        } else {
+          throw new Error('execCommand copy failed');
+        }
+      } catch (fallbackError) {
+        console.error('Fallback clipboard copy failed:', fallbackError);
+        toast.error("Failed to copy email content");
+      }
     }
   }, []);
 
-  // Simple, effective email handling
+  // Clean and effective email handling
   const handleSendEmail = useCallback(() => {
     if (!contactSession) return;
     
@@ -152,40 +149,22 @@ export const ContactPanel = () => {
     
     const customerName = contactSession.name || "Customer";
     const { subject, body } = generateEmailContent(customerName, conversationMessages);
+    const mailtoLink = generateMailtoLink(contactSession.email, customerName, conversationMessages);
     
     // Format email content for clipboard
     const emailContent = `To: ${contactSession.email}\nSubject: ${subject}\n\n${body}`;
     
     // On mobile devices, use mailto directly (works well with native email apps)
     if (isMobileDevice) {
-      window.location.href = generateMailtoLink(contactSession.email, customerName, conversationMessages);
+      window.location.href = mailtoLink;
       return;
     }
 
-    // On web browsers: try mailto first, then provide clipboard fallback
-    try {
-      // Try to open email client
-      window.location.href = generateMailtoLink(contactSession.email, customerName, conversationMessages);
-      
-      // Show success message with clipboard option
-      toast.success("Opening email client...", {
-        description: "If your email client didn't open, the content has been copied to your clipboard.",
-        action: {
-          label: "Copy to Clipboard",
-          onClick: () => copyEmailToClipboard(emailContent)
-        }
-      });
-      
-      // Also copy to clipboard as backup
-      copyEmailToClipboard(emailContent);
-      
-    } catch (error) {
-      // If mailto fails, just copy to clipboard
-      copyEmailToClipboard(emailContent);
-      toast.info("Email content copied to clipboard", {
-        description: "Paste it into your preferred email client or webmail service."
-      });
-    }
+    // On web browsers, open mailto and copy to clipboard as a reliable fallback
+    window.location.href = mailtoLink;
+    
+    // Copy to clipboard as backup - this function will show its own toast
+    copyEmailToClipboard(emailContent);
   }, [contactSession, messages.results, isMobileDevice, copyEmailToClipboard]);
 
   const accordionSections = useMemo<InfoSection[]>(() => {
