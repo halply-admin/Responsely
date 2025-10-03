@@ -147,3 +147,67 @@ export const create = mutation({
     return conversationId;
   },
 });
+
+export const escalateConversation = mutation({
+  args: { 
+    conversationId: v.id("conversations"),
+    contactSessionId: v.id("contactSessions"),
+  },
+  handler: async (ctx, args) => {
+    // Validate session
+    const session = await ctx.db.get(args.contactSessionId);
+    if (!session || session.expiresAt < Date.now()) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Invalid session",
+      });
+    }
+
+    // Get conversation
+    const conversation = await ctx.db.get(args.conversationId);
+    if (!conversation) {
+      throw new ConvexError({
+        code: "NOT_FOUND",
+        message: "Conversation not found",
+      });
+    }
+
+    // Verify conversation belongs to session
+    if (conversation.contactSessionId !== session._id) {
+      throw new ConvexError({
+        code: "UNAUTHORIZED",
+        message: "Incorrect session",
+      });
+    }
+
+    // Skip if already escalated
+    if (conversation.status === "escalated") {
+      return { alreadyEscalated: true };
+    }
+
+    // Update conversation status
+    await ctx.db.patch(conversation._id, {
+      status: "escalated",
+      escalatedAt: Date.now(),
+      escalationReason: "customer_requested",
+    });
+
+    // Add confirmation message
+    await saveMessage(ctx, components.agent, {
+      threadId: conversation.threadId,
+      message: {
+        role: "assistant",
+        content: "I've connected you with our support team. A team member will respond shortly.",
+      },
+    });
+
+    // Schedule email notification (fire-and-forget)
+    await ctx.scheduler.runAfter(
+      0, 
+      internal.emails.sendEscalationEmailForConversation, 
+      { conversationId: conversation._id }
+    );
+
+    return { success: true };
+  },
+});

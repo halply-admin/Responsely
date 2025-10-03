@@ -91,6 +91,12 @@ export default defineSchema({
       v.literal("escalated"),
       v.literal("resolved")
     ),
+    // NEW FIELDS for escalation tracking
+    escalatedAt: v.optional(v.number()),
+    escalationReason: v.optional(v.union(
+      v.literal("customer_requested"),
+      v.literal("ai_detected")
+    )),
   })
     .index("by_organization_id", ["organizationId"])
     .index("by_contact_session_id", ["contactSessionId"])

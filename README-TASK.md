@@ -1,7 +1,10 @@
-# Task: Fix Deployment Errors and PR Review Issues
+# Task: Customer Manual Escalation Feature Implementation
 
 ## Overview
-This task addressed deployment failures and code review feedback for the contact panel email functionality in the Halply application.
+This task implements a "Talk to a Human" button in the widget chat interface, allowing customers to manually escalate conversations to human support agents. This complements the existing AI-triggered escalation and sends email notifications to the support team.
+
+## Previous Task: Fix Deployment Errors and PR Review Issues
+The previous task addressed deployment failures and code review feedback for the contact panel email functionality in the Halply application.
 
 ## Issues Identified
 
@@ -128,8 +131,157 @@ This task addressed deployment failures and code review feedback for the contact
 4. **Code Quality**: Fixed ESLint warnings and improved code readability
 5. **Browser Compatibility**: Maintained fallback mechanisms for older browsers
 
+## New Task: Customer Manual Escalation Feature
+
+### Architecture Overview
+The feature follows a simple, efficient, and scalable architecture:
+
+```
+Customer clicks "Talk to a Human" button
+         ↓
+Public mutation: escalateConversation
+         ↓
+1. Update conversation status: unresolved → escalated
+2. Add timestamp & reason to conversation
+3. Send confirmation message to customer
+4. Schedule email notification (fire-and-forget)
+         ↓
+Email action: sendEscalationEmailForConversation
+         ↓
+- Fetch conversation details
+- Fetch contact session for customer info
+         ↓
+Email action: sendEscalationEmail (existing)
+         ↓
+- Check email settings
+- Send to all configured support emails
+- Log email delivery
+         ↓
+Resend component handles retry & delivery
+```
+
+### Implementation Details
+
+#### 1. Database Schema Updates
+**File**: `packages/backend/convex/schema.ts`
+- Added `escalatedAt: v.optional(v.number())` field to track when escalation occurred
+- Added `escalationReason: v.optional(v.union(v.literal("customer_requested"), v.literal("ai_detected")))` field to track escalation source
+- Both fields are optional to maintain backward compatibility with existing conversations
+
+#### 2. Backend Functions
+
+**Public Mutation**: `packages/backend/convex/public/conversations.ts`
+- `escalateConversation`: Handles customer-initiated escalation
+- Validates session and conversation ownership
+- Updates conversation status and metadata
+- Sends confirmation message to customer
+- Schedules email notification asynchronously
+
+**Helper Queries**: `packages/backend/convex/system/conversations.ts`
+- `get`: Fetches conversation by ID
+- `updateEscalationMetadata`: Updates escalation tracking fields
+
+**Email Wrapper Action**: `packages/backend/convex/emails.ts`
+- `sendEscalationEmailForConversation`: Wrapper that fetches conversation and contact session data
+- Calls existing `sendEscalationEmail` action with proper data
+- Uses established patterns: `ctx.runQuery()` for database access in actions
+
+**AI Tool Update**: `packages/backend/convex/system/ai/tools/escalateConversation.ts`
+- Enhanced to include email notification scheduling
+- Maintains existing AI escalation functionality
+- Adds escalation metadata tracking
+
+#### 3. Widget UI Updates
+**File**: `apps/widget/modules/widget/ui/screens/widget-chat-screen.tsx`
+- Added "Talk to a Human" button that appears when:
+  - Conversation status is "unresolved"
+  - More than 2 messages exist (prevents premature escalation)
+- Button shows loading state during escalation
+- Displays status indicator when conversation is escalated
+- Disables chat input when escalated
+- Uses console.log for user feedback (simplified approach without toast notifications)
+
+### Key Design Decisions
+
+#### 1. Simple and Efficient
+- **Single Responsibility**: One mutation handles customer escalation
+- **Clean Separation**: UI → mutation → email action
+- **Minimal Changes**: Reuses existing email infrastructure
+- **Fire-and-forget**: Email sending doesn't block escalation
+
+#### 2. Scalable
+- **Multi-tenant**: Works across organizations
+- **Extensible**: Easy to add escalation reasons, SLA tracking, etc.
+- **Email Retries**: Handled by Resend component
+- **Async Processing**: Uses Convex scheduler for email notifications
+
+#### 3. Secure
+- **Session Validation**: Prevents unauthorized escalations
+- **Ownership Verification**: Ensures conversation belongs to session
+- **Internal Actions**: Protects email logic from public access
+- **Proper Error Handling**: Throughout the flow
+
+#### 4. Observable
+- **Escalation Tracking**: Records reason (AI vs customer) and timestamp
+- **Email Logging**: Tracks delivery status
+- **Console Logging**: For debugging and monitoring
+
+### Code Quality Improvements
+
+#### Following Established Patterns
+- **Database Access**: Actions use `ctx.runQuery()` instead of direct `ctx.db` access
+- **Contact Session Fetching**: Uses `internal.system.contactSessions.getOne`
+- **Email Integration**: Leverages existing `sendEscalationEmail` action
+- **Error Handling**: Consistent with existing codebase patterns
+
+#### Convex Best Practices
+- **Internal vs Public**: Proper separation of concerns
+- **Scheduler Usage**: Async email processing
+- **Mutation Patterns**: Consistent with existing mutations
+- **Query Patterns**: Follows established query structure
+
+### Files Modified
+
+1. **`packages/backend/convex/schema.ts`**
+   - Added escalation tracking fields to conversations table
+
+2. **`packages/backend/convex/system/conversations.ts`**
+   - Added helper queries for conversation management
+
+3. **`packages/backend/convex/public/conversations.ts`**
+   - Added `escalateConversation` public mutation
+
+4. **`packages/backend/convex/emails.ts`**
+   - Added `sendEscalationEmailForConversation` wrapper action
+
+5. **`packages/backend/convex/system/ai/tools/escalateConversation.ts`**
+   - Enhanced AI escalation tool with email notifications
+
+6. **`apps/widget/modules/widget/ui/screens/widget-chat-screen.tsx`**
+   - Added escalation button and status display
+
+7. **`.gitignore`**
+   - Added README-TASK.md and CURRENT-TASK.md to ignore list
+
+### Testing Results
+- **Build Status**: ✅ Successful
+- **Linting**: ✅ No errors
+- **Type Checking**: ✅ Passed
+- **Deployment**: ✅ Ready for deployment
+- **Code Quality**: ✅ Follows established patterns
+
+### Future Enhancements
+- Add SLA tracking using `escalatedAt` timestamp
+- Add configurable escalation button text in widget settings
+- Add analytics dashboard for escalation reasons
+- Add "smart" escalation prompts (show after N failed AI responses)
+- Add escalation cooldown (prevent spam clicks)
+
 ## Documentation References
 - [Next.js Documentation](https://nextjs.org/docs)
 - [React useCallback Hook](https://react.dev/reference/react/useCallback)
 - [MDN Clipboard API](https://developer.mozilla.org/en-US/docs/Web/API/Clipboard_API)
 - [MDN execCommand](https://developer.mozilla.org/en-US/docs/Web/API/Document/execCommand)
+- [Convex Documentation](https://docs.convex.dev)
+- [Convex Actions](https://docs.convex.dev/functions/actions)
+- [Convex Scheduler](https://docs.convex.dev/functions/scheduled-functions)
