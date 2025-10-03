@@ -1,15 +1,15 @@
-import { mutation, query } from "../_generated/server";
+import { mutation, query, DatabaseReader } from "../_generated/server";
 import { components, internal } from "../_generated/api";
 import { ConvexError, v } from "convex/values";
 import { supportAgent } from "../system/ai/agents/supportAgent";
 import { MessageDoc, saveMessage } from "@convex-dev/agent";
 import { paginationOptsValidator } from "convex/server";
-import { Doc } from "../_generated/dataModel";
+import { Doc, DataModel, Id } from "../_generated/dataModel";
 
 // Helper function to validate contact session
 async function validateContactSession(
-  ctx: { db: any },
-  contactSessionId: string
+  ctx: { db: DatabaseReader },
+  contactSessionId: Id<"contactSessions">
 ): Promise<Doc<"contactSessions">> {
   const contactSession = await ctx.db.get(contactSessionId);
 

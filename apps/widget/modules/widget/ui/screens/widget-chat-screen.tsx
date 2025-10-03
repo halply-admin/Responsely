@@ -140,8 +140,6 @@ export const WidgetChatScreen = () => {
         toast.info("You are already connected with our support team.");
       } else if (result.success) {
         toast.success("Successfully connected with the support team. They will respond shortly.");
-      } else {
-        toast.error("Failed to connect with support. Please try again.");
       }
     } catch (error) {
       console.error("Failed to escalate:", error);
