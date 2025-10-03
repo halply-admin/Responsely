@@ -88,7 +88,7 @@ export const getLastMessageForThread = internalQuery({
   handler: async (ctx, args) => {
     const messages = await supportAgent.listMessages(ctx, {
       threadId: args.threadId,
-      paginationOpts: { numItems: 10, cursor: null }, // Get more messages to find a user message
+      paginationOpts: { numItems: 50, cursor: null }, // Get more messages to find a user message
     });
 
     if (messages.page.length > 0) {
