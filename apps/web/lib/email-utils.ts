@@ -25,6 +25,51 @@ export interface ConversationMessage {
 }
 
 /**
+ * Generate email subject from conversation messages
+ */
+function _generateEmailSubject(messages: ConversationMessage[]): string {
+  const firstCustomerMessage = messages.find(msg => msg.role === "user");
+  
+  if (firstCustomerMessage) {
+    const content = firstCustomerMessage.content;
+    const truncatedContent = content.length > SUBJECT_MAX_LENGTH
+      ? `${content.substring(0, SUBJECT_MAX_LENGTH)}...`
+      : content;
+    return `Re: ${truncatedContent}`;
+  } else {
+    return `Re: Your support inquiry`;
+  }
+}
+
+/**
+ * Build conversation history string from messages
+ */
+function _buildConversationHistory(messages: ConversationMessage[], customerName: string): string {
+  return messages
+    .map(msg => {
+      const sender = msg.role === "user" ? customerName : ASSISTANT_SENDER_NAME;
+      return `${sender}: ${msg.content}`;
+    })
+    .join('\n\n');
+}
+
+/**
+ * Build email body template with conversation history
+ */
+function _buildEmailBody(customerName: string, conversationHistory: string): string {
+  return `Hi ${customerName},
+
+Thank you for reaching out to us. I'm following up on our conversation.
+
+--- Original Conversation ---
+${conversationHistory}
+--- End of Conversation ---
+
+Best regards,
+Support Team`;
+}
+
+/**
  * Generate mailto link with conversation history
  */
 export const generateMailtoLink = (
@@ -32,27 +77,8 @@ export const generateMailtoLink = (
   customerName: string,
   messages: ConversationMessage[] = []
 ): string => {
-  // Get the first customer message as the subject
-  const firstCustomerMessage = messages.find(msg => msg.role === "user");
-  
-  let subject: string;
-  if (firstCustomerMessage) {
-    const content = firstCustomerMessage.content;
-    const truncatedContent = content.length > SUBJECT_MAX_LENGTH
-      ? `${content.substring(0, SUBJECT_MAX_LENGTH)}...`
-      : content;
-    subject = `Re: ${truncatedContent}`;
-  } else {
-    subject = `Re: Your support inquiry`;
-  }
-
-  // Build conversation history
-  let conversationHistory = messages
-    .map(msg => {
-      const sender = msg.role === "user" ? customerName : ASSISTANT_SENDER_NAME;
-      return `${sender}: ${msg.content}`;
-    })
-    .join('\n\n');
+  const subject = _generateEmailSubject(messages);
+  let conversationHistory = _buildConversationHistory(messages, customerName);
 
   // Truncate history if it's too long for mailto links
   if (conversationHistory.length > MAILTO_BODY_MAX_LENGTH) {
@@ -68,16 +94,7 @@ export const generateMailtoLink = (
     conversationHistory = truncatedHistory + HISTORY_TRUNCATION_MESSAGE;
   }
 
-  const body = `Hi ${customerName},
-
-Thank you for reaching out to us. I'm following up on our conversation.
-
---- Original Conversation ---
-${conversationHistory}
---- End of Conversation ---
-
-Best regards,
-Support Team`;
+  const body = _buildEmailBody(customerName, conversationHistory);
 
   // Encode the mailto parameters
   const encodedSubject = encodeURIComponent(subject);
@@ -94,39 +111,9 @@ export const generateEmailContent = (
   customerName: string,
   messages: ConversationMessage[] = []
 ): { subject: string; body: string } => {
-  // Get the first customer message as the subject
-  const firstCustomerMessage = messages.find(msg => msg.role === "user");
-  
-  let subject: string;
-  if (firstCustomerMessage) {
-    const content = firstCustomerMessage.content;
-    const truncatedContent = content.length > SUBJECT_MAX_LENGTH
-      ? `${content.substring(0, SUBJECT_MAX_LENGTH)}...`
-      : content;
-    subject = `Re: ${truncatedContent}`;
-  } else {
-    subject = `Re: Your support inquiry`;
-  }
-
-  // Build conversation history
-  const conversationHistory = messages
-    .map(msg => {
-      const sender = msg.role === "user" ? customerName : ASSISTANT_SENDER_NAME;
-      return `${sender}: ${msg.content}`;
-    })
-    .join('\n\n');
-
-  // For clipboard content, we don't need to truncate as much as mailto links
-  const body = `Hi ${customerName},
-
-Thank you for reaching out to us. I'm following up on our conversation.
-
---- Original Conversation ---
-${conversationHistory}
---- End of Conversation ---
-
-Best regards,
-Support Team`;
+  const subject = _generateEmailSubject(messages);
+  const conversationHistory = _buildConversationHistory(messages, customerName);
+  const body = _buildEmailBody(customerName, conversationHistory);
 
   return { subject, body };
 }; 

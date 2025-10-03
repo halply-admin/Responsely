@@ -103,11 +103,11 @@ export const ContactPanel = () => {
   }, []);
 
   // Robust function to copy email content to clipboard with proper fallback
-  const copyEmailToClipboard = useCallback(async (emailContent: string) => {
+  const copyEmailToClipboard = useCallback(async (emailContent: string): Promise<boolean> => {
     try {
       // Try modern clipboard API first
       await navigator.clipboard.writeText(emailContent);
-      toast.success("Email content copied to clipboard");
+      return true;
     } catch (error) {
       console.warn("Clipboard API failed, trying fallback:", error);
       // Fallback for older browsers or if the above fails
@@ -123,19 +123,20 @@ export const ContactPanel = () => {
         document.body.removeChild(textArea);
         
         if (success) {
-          toast.success("Email content copied to clipboard");
+          return true;
         } else {
           throw new Error('execCommand copy failed');
         }
       } catch (fallbackError) {
         console.error('Fallback clipboard copy failed:', fallbackError);
         toast.error("Failed to copy email content");
+        return false;
       }
     }
   }, []);
 
   // Clean and effective email handling
-  const handleSendEmail = useCallback(() => {
+  const handleSendEmail = useCallback(async () => {
     if (!contactSession) return;
     
     const uiMessages = toUIMessages(messages.results ?? []);
@@ -163,8 +164,12 @@ export const ContactPanel = () => {
     // On web browsers, open mailto and copy to clipboard as a reliable fallback
     window.location.href = mailtoLink;
     
-    // Copy to clipboard as backup - this function will show its own toast
-    copyEmailToClipboard(emailContent);
+    // Copy to clipboard as backup and show a contextual toast
+    if (await copyEmailToClipboard(emailContent)) {
+      toast.success("Opening email client...", {
+        description: "Email content has been copied to your clipboard as a backup.",
+      });
+    }
   }, [contactSession, messages.results, isMobileDevice, copyEmailToClipboard]);
 
   const accordionSections = useMemo<InfoSection[]>(() => {
