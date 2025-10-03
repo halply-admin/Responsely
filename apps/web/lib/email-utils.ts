@@ -116,4 +116,32 @@ export const generateEmailContent = (
   const body = _buildEmailBody(customerName, conversationHistory);
 
   return { subject, body };
+};
+
+/**
+ * Generate all email artifacts at once to avoid redundant computations
+ * Returns subject, full body for clipboard, and truncated body for mailto
+ */
+export const generateEmailArtifacts = (
+  customerName: string,
+  messages: ConversationMessage[] = []
+) => {
+  const subject = _generateEmailSubject(messages);
+  const conversationHistory = _buildConversationHistory(messages, customerName);
+  const body = _buildEmailBody(customerName, conversationHistory);
+
+  // Create truncated version for mailto links
+  let mailtoConversationHistory = conversationHistory;
+  if (mailtoConversationHistory.length > MAILTO_BODY_MAX_LENGTH) {
+    const truncationPoint = Math.max(0, MAILTO_BODY_MAX_LENGTH - HISTORY_TRUNCATION_MESSAGE.length);
+    let truncatedHistory = mailtoConversationHistory.substring(0, truncationPoint);
+    const lastSpaceIndex = truncatedHistory.lastIndexOf(' ');
+    if (lastSpaceIndex > 0) {
+      truncatedHistory = truncatedHistory.substring(0, lastSpaceIndex);
+    }
+    mailtoConversationHistory = truncatedHistory + HISTORY_TRUNCATION_MESSAGE;
+  }
+  const mailtoBody = _buildEmailBody(customerName, mailtoConversationHistory);
+
+  return { subject, body, mailtoBody };
 }; 

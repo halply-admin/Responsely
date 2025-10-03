@@ -20,6 +20,7 @@ import { useMemo, useCallback } from "react";
 import { 
   generateMailtoLink, 
   generateEmailContent,
+  generateEmailArtifacts,
   EMAIL_CONTEXT_MAX_MESSAGES,
   type ConversationMessage 
 } from "@/lib/email-utils";
@@ -149,8 +150,12 @@ export const ContactPanel = () => {
       }));
     
     const customerName = contactSession.name || "Customer";
-    const { subject, body } = generateEmailContent(customerName, conversationMessages);
-    const mailtoLink = generateMailtoLink(contactSession.email, customerName, conversationMessages);
+    const { subject, body, mailtoBody } = generateEmailArtifacts(customerName, conversationMessages);
+    
+    // Create mailto link using the pre-computed truncated body
+    const encodedSubject = encodeURIComponent(subject);
+    const encodedBody = encodeURIComponent(mailtoBody);
+    const mailtoLink = `mailto:${contactSession.email}?subject=${encodedSubject}&body=${encodedBody}`;
     
     // Format email content for clipboard
     const emailContent = `To: ${contactSession.email}\nSubject: ${subject}\n\n${body}`;
