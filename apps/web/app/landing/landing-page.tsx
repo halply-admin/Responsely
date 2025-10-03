@@ -124,7 +124,7 @@ const PRICING_PLANS: PricingPlan[] = [
     description: "Everything small businesses need for professional customer service",
     features: [
       "Everything in Free",
-      "AI Customer Support",
+      "Affordable Time-Saving Chat",
       "Phone-based AI with VAPI", 
       "Context-based answers",
       "Impact reporting & analytics",
@@ -603,7 +603,6 @@ export function LandingPage() {
                     alt="Responsely Logo"
                     width={40}
                     height={40}
-                    className="w-10 h-10"
                   />
                 </div>
                 <span className="text-xl font-bold text-gray-900">Responsely</span>
