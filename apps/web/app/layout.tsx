@@ -6,13 +6,15 @@ import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@workspace/ui/components/sonner";
 
+const LOGO_PATH = '/responsely-logo-trans-bg.png';
+
 export const metadata: Metadata = {
   title: 'Responsely',
   description: 'AI Customer Service that saves you time. Affordable AI support for small businesses.',
   icons: {
-    icon: '/responsely-logo-transparent-bg.png',
-    shortcut: '/responsely-logo-transparent-bg.png',
-    apple: '/responsely-logo-transparent-bg.png',
+    icon: LOGO_PATH,
+    shortcut: LOGO_PATH,
+    apple: LOGO_PATH,
   },
 };
 

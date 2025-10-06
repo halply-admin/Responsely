@@ -190,11 +190,10 @@ export function LandingPage() {
             <Link href="/" className="flex items-center space-x-3">
               <div className="w-12 h-12 flex items-center justify-center">
                 <Image 
-                  src="/responsely-logo-transparent-bg.png" 
+                  src="/responsely-logo-trans-bg.png" 
                   alt="Responsely Logo"
                   width={48}
                   height={48}
-                  className="w-12 h-12"
                 />
               </div>
               <span className="text-xl font-bold text-gray-900">Responsely</span>
@@ -599,7 +598,7 @@ export function LandingPage() {
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 flex items-center justify-center">
                   <Image 
-                    src="/responsely-logo-transparent-bg.png" 
+                    src="/responsely-logo-trans-bg.png" 
                     alt="Responsely Logo"
                     width={48}
                     height={48}
