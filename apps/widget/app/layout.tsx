@@ -3,8 +3,7 @@ import type { Metadata } from 'next'
 
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
-
-const LOGO_PATH = '/responsely-logo-trans-bg.png';
+import { LOGO_PATH } from "@/constants";
 
 export const metadata: Metadata = {
   title: 'Responsely Widget',

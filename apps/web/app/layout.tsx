@@ -5,8 +5,7 @@ import type { Metadata } from 'next'
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@workspace/ui/components/sonner";
-
-const LOGO_PATH = '/responsely-logo-trans-bg.png';
+import { LOGO_PATH } from "@/constants";
 
 export const metadata: Metadata = {
   title: 'Responsely',

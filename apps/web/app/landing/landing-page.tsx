@@ -7,6 +7,7 @@ import Script from 'next/script';
 import Image from "next/image";
 import { ArrowRight, MessageCircle, Phone, Users, BookOpen, Camera, Zap, Check, Menu, X, Star, LucideIcon } from "lucide-react";
 import { useState } from "react";
+import { LOGO_PATH } from "@/constants";
 
 // Types
 interface Testimonial {
@@ -190,7 +191,7 @@ export function LandingPage() {
             <Link href="/" className="flex items-center space-x-3">
               <div className="w-12 h-12 flex items-center justify-center">
                 <Image 
-                  src="/responsely-logo-trans-bg.png" 
+                  src={LOGO_PATH} 
                   alt="Responsely Logo"
                   width={48}
                   height={48}
@@ -598,7 +599,7 @@ export function LandingPage() {
               <div className="flex items-center space-x-3 mb-4">
                 <div className="w-12 h-12 flex items-center justify-center">
                   <Image 
-                    src="/responsely-logo-trans-bg.png" 
+                    src={LOGO_PATH} 
                     alt="Responsely Logo"
                     width={48}
                     height={48}
