@@ -1,6 +1,7 @@
 import { ArrowLeftRightIcon, type LucideIcon, PlugIcon } from "lucide-react";
 import Image from "next/image";
 import { Button } from "@workspace/ui/components/button";
+import { LOGO_PATH } from "@/constants";
 
 export interface Feature {
   icon: LucideIcon,
@@ -46,7 +47,7 @@ export const PluginCard = ({
             className="object-contain"
             height={48}
             width={48}
-            src="/responsely-logo-transparent-bg.png"
+            src={LOGO_PATH}
           />
         </div>
       </div>

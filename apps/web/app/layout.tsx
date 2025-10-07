@@ -5,14 +5,15 @@ import type { Metadata } from 'next'
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
 import { Toaster } from "@workspace/ui/components/sonner";
+import { LOGO_PATH } from "@/constants";
 
 export const metadata: Metadata = {
   title: 'Responsely',
   description: 'AI Customer Service that saves you time. Affordable AI support for small businesses.',
   icons: {
-    icon: '/responsely-logo-transparent-bg.png',
-    shortcut: '/responsely-logo-transparent-bg.png',
-    apple: '/responsely-logo-transparent-bg.png',
+    icon: LOGO_PATH,
+    shortcut: LOGO_PATH,
+    apple: LOGO_PATH,
   },
 };
 

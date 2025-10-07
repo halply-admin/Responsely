@@ -35,6 +35,7 @@ import {
 import { AIResponse } from "@workspace/ui/components/ai/response";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { LOGO_PATH } from "@/constants";
 
 const formSchema = z.object({
   message: z.string().min(1, "Message is required"),
@@ -188,7 +189,7 @@ export const WidgetChatScreen = () => {
                 </AIMessageContent>
                 {message.role === "assistant" && (
                   <DicebearAvatar
-                    imageUrl="/responsely-logo-transparent-bg.png"
+                    imageUrl={LOGO_PATH}
                     seed="assistant"
                     size={38}
                   />

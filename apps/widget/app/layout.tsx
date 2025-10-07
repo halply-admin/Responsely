@@ -3,14 +3,15 @@ import type { Metadata } from 'next'
 
 import "@workspace/ui/globals.css"
 import { Providers } from "@/components/providers"
+import { LOGO_PATH } from "@/constants";
 
 export const metadata: Metadata = {
   title: 'Responsely Widget',
   description: 'AI Customer Support Widget',
   icons: {
-    icon: '/responsely-logo-transparent-bg.png',
-    shortcut: '/responsely-logo-transparent-bg.png',
-    apple: '/responsely-logo-transparent-bg.png',
+    icon: LOGO_PATH,
+    shortcut: LOGO_PATH,
+    apple: LOGO_PATH,
   },
 };
 
